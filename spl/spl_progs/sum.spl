@@ -1,0 +1,9 @@
+alias s R0;
+alias i R1;
+i=1;
+s=0;
+while(i<=20) do
+	s=s+i*i;
+	i=i+1;
+endwhile;
+print s;

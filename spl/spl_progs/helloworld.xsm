@@ -1,0 +1,4 @@
+mov R0, "Hello, World!!!"
+PORT P1, R0
+OUT
+HALT

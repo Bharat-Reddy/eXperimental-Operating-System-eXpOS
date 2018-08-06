@@ -1,0 +1,18 @@
+alias i R0;
+alias test R1;
+i=0;
+while(i<=10) do
+	if(i%2==0) then
+		breakpoint;
+	endif;
+	if(i==0) then
+		test="ZERO";
+	endif;
+	if(i==1) then
+		test="ONE";
+	endif;
+	if(i==2) then
+		test="THREE";
+	endif;
+	i=i+1;
+endwhile;
