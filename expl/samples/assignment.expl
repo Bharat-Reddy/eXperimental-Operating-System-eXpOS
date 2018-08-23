@@ -18,6 +18,7 @@ int main()
 		var.marks=89;
 		temp=exposcall("Write",-2,var.name);
 		temp=exposcall("Write",-2,var.marks);
+		free(var);
 		return 0;
 	end
 }
