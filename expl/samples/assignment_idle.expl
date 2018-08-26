@@ -1,0 +1,15 @@
+int main()
+{
+	decl
+		int a;
+	enddecl
+	begin
+		a=101;
+		while(a<=200) do
+			write(a);
+			a=a+1;
+		endwhile;
+		return 0;
+
+	end
+}

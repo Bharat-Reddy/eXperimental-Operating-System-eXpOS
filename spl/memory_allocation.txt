@@ -1,0 +1,11 @@
+76,77 - stack of init
+78,79 - heap of init
+80 - user area page for init
+
+81 - stack for idle
+82 - user area page for idle
+
+83 - code area for even numbers process (70 is the disk block number for even numbers programme)
+84,85 - heap area for even numbers process
+86,87 - stack area for even numbers process
+88 - user area page for even numbers process

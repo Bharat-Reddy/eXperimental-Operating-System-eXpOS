@@ -26,6 +26,10 @@ loadi(17,30);
 loadi(69,11);
 loadi(70,12);
 
+//Module 7
+loadi(54,67);
+loadi(55,68);
+
 //--------------------------------------------------
 
 PTBR=PAGE_TABLE_BASE; //for IDLE Process we use first 16 words since its PID=0
