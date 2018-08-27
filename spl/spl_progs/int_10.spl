@@ -1,0 +1,26 @@
+alias pid R0;
+pid = [SYSTEM_STATUS_TABLE+1];
+
+
+[(PROCESS_TABLE + (pid * 16)) + 4]=TERMINATED;
+
+alias check R1;
+check=1;
+
+alias index R2;
+index=1;
+
+while(index<=15) do
+
+	if([(PROCESS_TABLE + (index * 16)) + 4]!=TERMINATED) then
+		check=0;
+		break;
+	endif;
+	index=index+1;
+endwhile;
+
+if(check==1) then
+	halt;
+else
+	call MOD_5;
+endif;
