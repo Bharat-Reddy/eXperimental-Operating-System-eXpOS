@@ -22,6 +22,16 @@ loadi(3,16);
 loadi(16,29);
 loadi(17,30);
 
+//Module 0
+loadi(40,53);
+loadi(41,54);
+
+//Module 4
+loadi(48,61);
+loadi(49,62);
+
+//Initialising terminal status to 0
+[TERMINAL_STATUS_TABLE] = 0;
 
 //---------------------------------------INIT PROCESS -------------------------//
 PTBR=PAGE_TABLE_BASE+20;
@@ -113,4 +123,53 @@ PTLR=10;
 
 [86*512]=[83*512+1];
 
+
+//--------------------------------------- Prime Numbers Executable --------------------------------
+
+//Loading code pages from disk to memory
+loadi(89,71);
+
+PTBR=PAGE_TABLE_BASE+60;
+PTLR=10;
+
+//Library
+[PTBR+0]=63;
+[PTBR+1]="0100";
+[PTBR+2]=64;
+[PTBR+3]="0100";
+
+//Heap
+[PTBR+4]=90;
+[PTBR+5]="0110";
+[PTBR+6]=91;
+[PTBR+7]="0110";
+
+//Code
+[PTBR+8]=89;
+[PTBR+9]="0100";
+[PTBR+10]=-1;
+[PTBR+11]="0100";
+[PTBR+12]=-1;
+[PTBR+13]="0000";
+[PTBR+14]=-1;
+[PTBR+15]="0000";
+
+//Stack
+[PTBR+16]=92;
+[PTBR+17]="0110";
+[PTBR+18]=93;
+[PTBR+19]="0110";
+
+
+[PROCESS_TABLE+16*3+11]=94;
+[PROCESS_TABLE+16*3+1]=3;
+[PROCESS_TABLE+16*3+4]=CREATED;
+[PROCESS_TABLE+16*3+13]=8*512;
+[PROCESS_TABLE+16*3+12]=0;
+[PROCESS_TABLE+16*3+14]=PAGE_TABLE_BASE+60;
+[PROCESS_TABLE+16*3+15]=10;
+
+[92*512]=[89*512+1];
+
 return;
+

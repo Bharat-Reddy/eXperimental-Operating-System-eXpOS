@@ -1,11 +1,24 @@
+======================Details of INIT process===================
+
 76,77 - stack of init
 78,79 - heap of init
 80 - user area page for init
 
+======================Details of IDLE Process====================
+
 81 - stack for idle
 82 - user area page for idle
+
+=======================Details of even numbers process===========================
 
 83 - code area for even numbers process (70 is the disk block number for even numbers programme)
 84,85 - heap area for even numbers process
 86,87 - stack area for even numbers process
 88 - user area page for even numbers process
+
+========================Details of prime numbers process==============================
+
+89 - code area for prime numbers process (71 is the disk block number for prime numbers programme)
+90,91 - heap area for prime numbers process
+92,93 - stack area for prime numbers process
+94 - user area page for prime numbers process

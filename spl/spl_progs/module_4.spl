@@ -1,0 +1,28 @@
+alias functionNum R1;
+alias currentPID R2;
+
+if(functionNum==3) then
+	
+	multipush(R0, R1, R2, R3, R4, R5, R6);
+	R1=8;
+	R2=currentPID;
+	call MOD_0;
+	multipop(R0, R1, R2, R3, R4, R5, R6);
+	//Terminal Acquired
+
+	alias word R3;
+	print word;
+
+	//Releasing terminal
+
+	multipush(R0, R1, R2, R3, R4, R5, R6);
+	R1=9;
+	R2=currentPID;
+	call MOD_0;
+	multipop(R0, R1, R2, R3, R4, R5, R6);
+
+	return;
+
+else
+	return;
+endif;
