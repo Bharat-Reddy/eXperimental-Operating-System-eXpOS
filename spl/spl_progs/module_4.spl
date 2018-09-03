@@ -24,5 +24,37 @@ if(functionNum==3) then
 	return;
 
 else
-	return;
+	if(functionNum==4) then
+	
+		multipush(R0, R1, R2, R3, R4, R5, R6);
+		R1=8;
+		R2=currentPID;
+		call MOD_0;
+		multipop(R0, R1, R2, R3, R4, R5, R6);
+		//Terminal Acquired
+
+		read;
+		[PROCESS_TABLE + (currentPID*16) + 4] = WAIT_TERMINAL;
+
+		//Invoking context switch module
+		multipush(R0, R1, R2, R3, R4, R5, R6);
+		call MOD_5; //Invoking Scheduler
+		multipop(R0, R1, R2, R3, R4, R5, R6);
+		//Releasing terminal
+
+		alias physicalPageNum R4;
+		alias offset R5;
+		alias PhysicalAddr R6;
+		physicalPageNum = [PTBR + 2 * ((R3)/ 512)];
+		offset = (R3) % 512;
+		PhysicalAddr = (physicalPageNum * 512) + offset;
+		[PhysicalAddr] = [PROCESS_TABLE + (currentPID*16) + 8];
+
+		return;
+	else
+		return;
+
+	endif;
+
 endif;
+return;

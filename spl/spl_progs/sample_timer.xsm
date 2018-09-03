@@ -1,6 +1,3 @@
-MOV R16,  "-----------"
-PORT P1, R16
-OUT
 MOV R16, 28672
 MOV R17, 29560
 ADD R17, 1

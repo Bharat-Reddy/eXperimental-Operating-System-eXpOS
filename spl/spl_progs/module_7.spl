@@ -2,6 +2,10 @@
 loadi(4,17);
 loadi(5,18);
 
+//console interrupt
+loadi(8,21);
+loadi(9,22);
+
 //shared library
 loadi(63,13);
 loadi(64,14);
@@ -21,6 +25,10 @@ loadi(3,16);
 //INT 7
 loadi(16,29);
 loadi(17,30);
+
+//INT 6
+loadi(14,27);
+loadi(15,28);
 
 //Module 0
 loadi(40,53);

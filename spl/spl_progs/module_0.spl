@@ -3,20 +3,19 @@ alias currentPID R2;
 
 if(functionNum==8) then
 	
-	if( ([TERMINAL_STATUS_TABLE] ) == 1) then
+	while( ([TERMINAL_STATUS_TABLE] ) == 1) do
 
 		[ (PROCESS_TABLE + (currentPID * 16)) + 4 ] = WAIT_TERMINAL;
 		multipush(R0, R1, R2, R3, R4, R5, R6);
 		call MOD_5;
-		multipush(R0, R1, R2, R3, R4, R5, R6);
+		multipop(R0, R1, R2, R3, R4, R5, R6);
 
-	else
+	endwhile;
 
-		[TERMINAL_STATUS_TABLE] = 1;
-		[TERMINAL_STATUS_TABLE + 1] = currentPID;
-		return;
+	[TERMINAL_STATUS_TABLE] = 1;
+	[TERMINAL_STATUS_TABLE + 1] = currentPID;
+	return;
 
-	endif;
 
 endif;
 
@@ -44,5 +43,7 @@ if(functionNum==9) then
 		return;
 
 	endif;
+	else
+		return;
 
 endif;
