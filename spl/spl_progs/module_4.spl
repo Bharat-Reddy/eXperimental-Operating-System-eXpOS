@@ -1,7 +1,9 @@
+//DEVICE MANAGER MODULE
+
 alias functionNum R1;
 alias currentPID R2;
 
-if(functionNum==3) then
+if(functionNum==3) then //Terminal write function
 	
 	multipush(R0, R1, R2, R3, R4, R5, R6);
 	R1=8;
@@ -24,6 +26,7 @@ if(functionNum==3) then
 	return;
 
 else
+	//Terminal read function
 	if(functionNum==4) then
 	
 		multipush(R0, R1, R2, R3, R4, R5, R6);

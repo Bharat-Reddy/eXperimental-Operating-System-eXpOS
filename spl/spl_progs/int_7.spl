@@ -1,10 +1,16 @@
+//set mode flag of cureent process to 5(write system call)
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 5;
+
+//save user stack pointer
 alias userSP R0;
 userSP = SP;
 
+//switch to kernel stack
 [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
 SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
 
+
+//accessing the file descriptor
 alias physicalPageNum R1;
 alias offset R2;
 alias fileDescPhysicalAddr R3;
@@ -14,33 +20,41 @@ fileDescPhysicalAddr = (physicalPageNum * 512) + offset;
 alias fileDescriptor R4;
 fileDescriptor=[fileDescPhysicalAddr];
 
+//checking whether file descriptor is valid or not
 if (fileDescriptor != -2)
 then
 	 alias physicalAddrRetVal R5;
 	 physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
 	 [physicalAddrRetVal] = -1;
 else
+	//if valid get the word from stack and call device manager module(module 4)
 	alias word R5;
 	word = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + ((userSP - 3) % 512)];
 
 	multipush(R0, R1, R2, R3, R4, R5, R6);
-	R1=3;
+
+	//passing arguments
+
+	R1=3; //System call number of Terminal write in device manager module
 	R2=[SYSTEM_STATUS_TABLE + 1];
-	R3=word;
+	R3=word; //word to be written
 
-	call MOD_4;
-
-	//print word;
+	call MOD_4; //calling device manager module (module 4)
+	//Prints the word(writing it instead of "print word;")
 
 	multipop(R0, R1, R2, R3, R4, R5, R6);
 
 
 	alias physicalAddrRetVal R6;
 	physicalAddrRetVal = ([PTBR + 2 * (userSP - 1)/ 512] * 512) + ((userSP - 1) % 512);
-	[physicalAddrRetVal] = 0;
+	[physicalAddrRetVal] = 0; //storing return value(0 for success)
 
 endif;
 
+//changing back to user stack
 SP = userSP;
+
+//reset mode flag (0 indicates process is in user mode).
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
 ireturn;

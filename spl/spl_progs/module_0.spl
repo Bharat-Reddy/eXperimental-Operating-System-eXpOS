@@ -1,7 +1,9 @@
-alias functionNum R1;
-alias currentPID R2;
+//RESOURCE MANAGER MODULE
 
-if(functionNum==8) then
+alias functionNum R1; //retriving the function number
+alias currentPID R2; //PID of current process
+
+if(functionNum==8) then //Func number 8 == Acquire terminal
 	
 	while( ([TERMINAL_STATUS_TABLE] ) == 1) do
 
@@ -16,17 +18,16 @@ if(functionNum==8) then
 	[TERMINAL_STATUS_TABLE + 1] = currentPID;
 	return;
 
-
 endif;
 
-if(functionNum==9) then
+if(functionNum==9) then //func number 9 == Release terminal
 
 	if([TERMINAL_STATUS_TABLE + 1] == currentPID) then
 
 		[TERMINAL_STATUS_TABLE] = 0;
 		alias i R6;
 		i=0;
-
+		//waking up all the processes which are in WAIT_TERMINAL state
 		while(i<=15) do
 			if([PROCESS_TABLE+16*i+4] == WAIT_TERMINAL) then
 				[PROCESS_TABLE+16*i+4]=READY;

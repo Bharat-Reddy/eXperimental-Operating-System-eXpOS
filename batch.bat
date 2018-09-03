@@ -1,7 +1,7 @@
 load --init /home/bharat/myexpos/expl/samples/bubble_sort.xsm
 load --int=10 /home/bharat/myexpos/spl/spl_progs/int_10.xsm
 load --exhandler /home/bharat/myexpos/spl/spl_progs/haltprog.xsm
-load --os /home/bharat/myexpos/spl/spl_progs/os_modified.xsm
+load --os /home/bharat/myexpos/spl/spl_progs/os_startup.xsm
 load --library /home/bharat/myexpos/expl/library.lib
 load --int=timer /home/bharat/myexpos/spl/spl_progs/sample_timer.xsm
 load --int=console /home/bharat/myexpos/spl/spl_progs/console_interrupt.xsm

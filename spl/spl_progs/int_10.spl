@@ -1,8 +1,8 @@
 alias pid R0;
-pid = [SYSTEM_STATUS_TABLE+1];
+pid = [SYSTEM_STATUS_TABLE+1]; //Retriving PID of process which invoked INT_10
 
 
-[(PROCESS_TABLE + (pid * 16)) + 4]=TERMINATED;
+[(PROCESS_TABLE + (pid * 16)) + 4]=TERMINATED; //Setting PID of Invoking process to TERMINATED
 
 alias check R1;
 check=1;
@@ -10,6 +10,7 @@ check=1;
 alias index R2;
 index=1;
 
+//Checking if there is any process which is not yet TERMINATED
 while(index<=15) do
 
 	if([(PROCESS_TABLE + (index * 16)) + 4]!=TERMINATED) then
@@ -19,8 +20,9 @@ while(index<=15) do
 	index=index+1;
 endwhile;
 
+//If all processes are terminated then halt the machine
 if(check==1) then
 	halt;
 else
-	call MOD_5;
+	call MOD_5; //Else call the scheduler
 endif;

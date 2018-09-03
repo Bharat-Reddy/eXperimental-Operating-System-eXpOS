@@ -6,7 +6,7 @@ SP=[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+11]*512-1;
 backup;
 
 alias reqPID R0;
-reqPID = [TERMINAL_STATUS_TABLE+1];
+reqPID = [TERMINAL_STATUS_TABLE+1]; //PID of process which occupied terminal
 
 [PROCESS_TABLE + reqPID*16 + 8]=P0;
 
@@ -15,10 +15,11 @@ reqPID = [TERMINAL_STATUS_TABLE+1];
 multipush(R0, R1, R2, R3, R4, R5, R6);
 R1=9;
 R2=reqPID;
-call MOD_0;
+call MOD_0; //call resource manager module for release terminal function
 multipop(R0, R1, R2, R3, R4, R5, R6);
 
 restore;
 
+//changing back to user stack
 SP=[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+13];
 ireturn;
