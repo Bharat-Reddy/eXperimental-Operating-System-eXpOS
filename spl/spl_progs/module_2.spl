@@ -1,0 +1,44 @@
+//MEMORY MANAGER MODULE
+
+alias functionNum R1; //retriving the function number
+
+if(functionNum==1) then
+	[SYSTEM_STATUS_TABLE+3]=[SYSTEM_STATUS_TABLE+3]+1; //Incrementing WAIT_MEM_COUNT
+
+	while([SYSTEM_STATUS_TABLE+2]==0) do //While MEM_FREE_COUNT is 0(i.e. no free memory available)
+		[PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+4]=WAIT_MEM;
+
+		multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
+		call MOD_5;
+		multipop(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);		
+	endwhile;
+
+	[SYSTEM_STATUS_TABLE+3]=[SYSTEM_STATUS_TABLE+3]-1; //Decrementing WAIT_MEM_COUNT
+	[SYSTEM_STATUS_TABLE+2]=[SYSTEM_STATUS_TABLE+2]-1; //Decrementing MEM_FREE_COUNT
+
+	alias i R3;
+	i=0;
+	while(i<128) do
+		if([MEMORY_FREE_LIST+i]==0) then
+			[MEMORY_FREE_LIST+i]=1;
+			break;
+		endif;
+		i=i+1;
+	endwhile;
+
+	R0=i;
+
+	return;
+
+endif;
+
+if(functionNum==2) then
+	[MEMORY_FREE_LIST+R2]=[MEMORY_FREE_LIST+R2]-1;
+
+	//Increment MEM_FREE_COUNT if no process is using that page
+	if([MEMORY_FREE_LIST+R2]==0) then
+		[SYSTEM_STATUS_TABLE+2]=[SYSTEM_STATUS_TABLE+2]+1; 
+	endif;
+	
+	return;
+endif;

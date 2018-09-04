@@ -1,6 +1,5 @@
 alias userSP R0; 
 userSP=SP; //Saving value of user stack
-
 [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP; //Saving sp value in UPTR field
 SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1; //Setting up kernel stack
 
@@ -24,15 +23,13 @@ i=0;
 check=0;
 while(i<MAX_FILE_NUM) do
 
-	if([INODE_TABLE+ 16*i + 1]==fileName && [INODE_TABLE+ 16*i]==3) then
+	if([INODE_TABLE+ 16*i + 1]==fileName) then
 		check=1;
 		inode_index=i;
 		break;
 	endif;
 	i=i+1;
 endwhile;
-
-
 //Failure case
 if(check==0) then
 	
@@ -50,16 +47,18 @@ if(check==0) then
 	ireturn;
 endif;
 
+
 //Calling "Exit Process" function
 alias PID_exit R10;
 PID_exit=[SYSTEM_STATUS_TABLE + 1];
-multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
-
+//multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
+backup;
 R1=3; //Function number of exit in process manager module(Module 1)
 R2=[SYSTEM_STATUS_TABLE + 1];
 call MOD_1;
 
-multipop(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
+restore;
+//multipop(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
 
 alias userAreaPageNo R8;
 
@@ -89,77 +88,102 @@ PTBR=PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20;
 [PTBR+2]=64;
 [PTBR+3]="0100";
 
-multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
-
+//multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
+backup;
 //Heap
 R1=1;
 call MOD_2;
 [PTBR+4]=R0;
 [PTBR+5]="0110";
+restore;
+
+backup;
 R1=1;
 call MOD_2;
 [PTBR+6]=R0;
 [PTBR+7]="0110";
+restore;
 
+backup;
 //Stack
 R1=1;
 call MOD_2;
 [PTBR+16]=R0;
 [PTBR+17]="0110";
+restore;
+
+backup;
 R1=1;
 call MOD_2;
 [PTBR+18]=R0;
 [PTBR+19]="0110";
+restore;
 
 //Code Pages
-if([INODE_TABLE+ 16*[SYSTEM_STATUS_TABLE+1] + 8] != -1) then
+if([INODE_TABLE+ 16*inode_index + 8] != -1) then
+	
+	backup;
 	R1=1;
 	call MOD_2;
+	
 	[PTBR+8]=R0;
 	[PTBR+9]="0100";
+	restore;
+	loadi([PTBR+8], [INODE_TABLE+ 16*inode_index + 8]);
 endif;
-if([INODE_TABLE+ 16*[SYSTEM_STATUS_TABLE+1] + 9] != -1) then
+if([INODE_TABLE+ 16*inode_index + 9] != -1) then
+	backup;
 	R1=1;
 	call MOD_2;
 	[PTBR+10]=R0;
 	[PTBR+11]="0100";
+	restore;
+	loadi([PTBR+10], [INODE_TABLE+ 16*inode_index + 9]);
 endif;
-if([INODE_TABLE+ 16*[SYSTEM_STATUS_TABLE+1] + 10] != -1) then
+if([INODE_TABLE+ 16*inode_index + 10] != -1) then
+	backup;
 	R1=1;
 	call MOD_2;
 	[PTBR+12]=R0;
 	[PTBR+13]="0100";
+	restore;
+	loadi([PTBR+12], [INODE_TABLE+ 16*inode_index + 10]);
 endif;
-if([INODE_TABLE+ 16*[SYSTEM_STATUS_TABLE+1] + 11] != -1) then
+if([INODE_TABLE+ 16*inode_index + 11] != -1) then
+	backup;
 	R1=1;
 	call MOD_2;
 	[PTBR+14]=R0;
 	[PTBR+15]="0100";
+	restore;
+	loadi([PTBR+14], [INODE_TABLE+ 16*inode_index + 11]);
 endif;
 
-multipop(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
-
+//multipop(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
 
 //Loading code blocks from dist to memory
 
-if([INODE_TABLE+ 16*[SYSTEM_STATUS_TABLE+1] + 8] != -1) then
-	loadi([PTBR+8], [INODE_TABLE+ 16*[SYSTEM_STATUS_TABLE+1] + 8]);
+
+
+
+if([INODE_TABLE+ 16*inode_index + 8] != -1) then
+	//multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
+	backup;
+	R1=1;
+	call MOD_2;
+	[PTBR+8]=R0;
+	[PTBR+9]="0100";
+	restore;
+	//multipop(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
+	loadi([PTBR+8], [INODE_TABLE+ 16*inode_index + 8]);
 endif;
-if([INODE_TABLE+ 16*[SYSTEM_STATUS_TABLE+1] + 9] != -1) then
-	loadi([PTBR+10], [INODE_TABLE+ 16*[SYSTEM_STATUS_TABLE+1] + 9]);
-endif;
-if([INODE_TABLE+ 16*[SYSTEM_STATUS_TABLE+1] + 10] != -1) then
-	loadi([PTBR+12], [INODE_TABLE+ 16*[SYSTEM_STATUS_TABLE+1] + 10]);
-endif;
-if([INODE_TABLE+ 16*[SYSTEM_STATUS_TABLE+1] + 11] != -1) then
-	loadi([PTBR+14], [INODE_TABLE+ 16*[SYSTEM_STATUS_TABLE+1] + 11]);
-endif;
+
 
 //Setting top of SP to entry point
 [[PTBR+16]*512] = [[PTBR+8]*512+1];
 
 //changing back to user stack
-SP=userSP;
+SP=8*512;
 
 //reset mode flag (0 indicates process is in user mode).
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
