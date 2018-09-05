@@ -2,7 +2,7 @@
 
 alias functionNum R1; //retriving the function number
 
-if(functionNum==1) then
+if(functionNum==1) then //Get free page
 	[SYSTEM_STATUS_TABLE+3]=[SYSTEM_STATUS_TABLE+3]+1; //Incrementing WAIT_MEM_COUNT
 
 	while([SYSTEM_STATUS_TABLE+2]==0) do //While MEM_FREE_COUNT is 0(i.e. no free memory available)
@@ -32,7 +32,7 @@ if(functionNum==1) then
 
 endif;
 
-if(functionNum==2) then
+if(functionNum==2) then //Release page
 	[MEMORY_FREE_LIST+R2]=[MEMORY_FREE_LIST+R2]-1;
 
 	//Increment MEM_FREE_COUNT if no process is using that page

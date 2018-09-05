@@ -23,6 +23,18 @@ tempPID=currentPID+1;
 alias newPID R2;
 newPID=0;
 
+tempPID=1;
+/////////////////////////////
+while(tempPID<currentPID) do
+	if([ (PROCESS_TABLE + (tempPID * 16)) + 4 ] == READY || [ (PROCESS_TABLE + (tempPID * 16)) + 4 ] == CREATED) then
+		newPID=tempPID;
+		break;
+	endif;
+	tempPID=tempPID+1;
+endwhile;
+/////////////////////////////
+
+tempPID=currentPID+1;
 while(tempPID<=15) do
 	if([ (PROCESS_TABLE + (tempPID * 16)) + 4 ] == READY || [ (PROCESS_TABLE + (tempPID * 16)) + 4 ] == CREATED) then
 		newPID=tempPID;

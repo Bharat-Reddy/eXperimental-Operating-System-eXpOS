@@ -3,7 +3,7 @@
 alias functionNum R1; //retriving the function number
 alias currentPID R2; //PID of current process
 
-if(functionNum==2) then
+if(functionNum==2) then //Free user area page
 	alias userAreaPageNo R3;
 	userAreaPageNo=[PROCESS_TABLE + currentPID*16 + 11];
 
@@ -16,7 +16,7 @@ if(functionNum==2) then
 
 endif;
 
-if(functionNum==3) then
+if(functionNum==3) then //Exit process
 
 	//Free page table Entries
 	multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
@@ -37,7 +37,7 @@ if(functionNum==3) then
 
 endif;
 
-if(functionNum==4) then
+if(functionNum==4) then //Free page table function
 	
 	PTBR=PAGE_TABLE_BASE+currentPID*20;
 

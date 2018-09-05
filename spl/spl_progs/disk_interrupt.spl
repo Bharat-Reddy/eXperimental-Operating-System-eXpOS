@@ -1,0 +1,23 @@
+//Switching to kernel stack
+
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE+1]*16)+13]=SP;
+SP=[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+11]*512-1;
+
+backup;
+
+[DISK_STATUS_TABLE]=0; //Disk status bit to zero(i.e. it is free)
+
+alias i R0;
+i=0;
+while(i<=15) do
+	if([PROCESS_TABLE+16*i+4] == WAIT_DISK) then
+		[PROCESS_TABLE+16*i+4]=READY;
+	endif;
+	i=i+1;
+endwhile;
+
+restore;
+
+//changing back to user stack
+SP=[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+13];
+ireturn;

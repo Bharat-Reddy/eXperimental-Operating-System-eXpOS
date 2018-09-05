@@ -5,9 +5,10 @@ load --os /home/bharat/myexpos/spl/spl_progs/os_startup.xsm
 load --library /home/bharat/myexpos/expl/library.lib
 load --int=timer /home/bharat/myexpos/spl/spl_progs/sample_timer.xsm
 load --int=console /home/bharat/myexpos/spl/spl_progs/console_interrupt.xsm
+load --int=disk /home/bharat/myexpos/spl/spl_progs/disk_interrupt.xsm
 load --int=7 /home/bharat/myexpos/spl/spl_progs/int_7.xsm
 load --int=6 /home/bharat/myexpos/spl/spl_progs/int_6.xsm
-load --int=9 /home/bharat/myexpos/spl/spl_progs/int_9.xsm
+load --int=9 /home/bharat/myexpos/spl/spl_progs/int_9_modified.xsm
 load --idle /home/bharat/myexpos/expl/samples/idle.xsm
 load --module 7 /home/bharat/myexpos/spl/spl_progs/module_7.xsm
 load --module 5 /home/bharat/myexpos/spl/spl_progs/module_5.xsm

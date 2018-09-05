@@ -3,13 +3,44 @@
 alias functionNum R1;
 alias currentPID R2;
 
+if(functionNum==2) then //Disk load function
+
+	alias page_no R3;
+	alias block_no R4;
+
+	//Acquiring disk
+	backup;
+	R1=3;
+	R2=currentPID;
+	call MOD_0;
+	restore;
+
+	//Setting up disk status table entries
+	[DISK_STATUS_TABLE+1]=0; //Setting the load/store bit to zero(indicating its a load operation)
+	[DISK_STATUS_TABLE+2]=page_no; //Setting page number in disk status table
+	[DISK_STATUS_TABLE+3]=block_no; //Setting block number in disk status table
+
+	//load statement
+	load(page_no,block_no);
+
+	[PROCESS_TABLE + (currentPID*16) + 4] = WAIT_DISK;	
+
+	//Invoking context switch module
+	backup;
+	call MOD_5; //Invoking Scheduler
+	restore;
+
+	return;
+
+endif;
+
 if(functionNum==3) then //Terminal write function
 	
-	multipush(R0, R1, R2, R3, R4, R5, R6);
+	backup;
 	R1=8;
 	R2=currentPID;
 	call MOD_0;
-	multipop(R0, R1, R2, R3, R4, R5, R6);
+	restore;
 	//Terminal Acquired
 
 	alias word R3;
@@ -17,11 +48,11 @@ if(functionNum==3) then //Terminal write function
 
 	//Releasing terminal
 
-	multipush(R0, R1, R2, R3, R4, R5, R6);
+	backup;
 	R1=9;
 	R2=currentPID;
 	call MOD_0;
-	multipop(R0, R1, R2, R3, R4, R5, R6);
+	restore;
 
 	return;
 
@@ -29,21 +60,22 @@ else
 	//Terminal read function
 	if(functionNum==4) then
 	
-		multipush(R0, R1, R2, R3, R4, R5, R6);
+		//multipush(R0, R1, R2, R3, R4, R5, R6);
+		backup;
 		R1=8;
 		R2=currentPID;
 		call MOD_0;
-		multipop(R0, R1, R2, R3, R4, R5, R6);
+		restore;
+		//multipop(R0, R1, R2, R3, R4, R5, R6);
 		//Terminal Acquired
 
 		read;
 		[PROCESS_TABLE + (currentPID*16) + 4] = WAIT_TERMINAL;
 
 		//Invoking context switch module
-		multipush(R0, R1, R2, R3, R4, R5, R6);
+		backup;
 		call MOD_5; //Invoking Scheduler
-		multipop(R0, R1, R2, R3, R4, R5, R6);
-		//Releasing terminal
+		restore;
 
 		alias physicalPageNum R4;
 		alias offset R5;

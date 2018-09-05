@@ -159,25 +159,6 @@ if([INODE_TABLE+ 16*inode_index + 11] != -1) then
 	loadi([PTBR+14], [INODE_TABLE+ 16*inode_index + 11]);
 endif;
 
-//multipop(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
-
-//Loading code blocks from dist to memory
-
-
-
-
-if([INODE_TABLE+ 16*inode_index + 8] != -1) then
-	//multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
-	backup;
-	R1=1;
-	call MOD_2;
-	[PTBR+8]=R0;
-	[PTBR+9]="0100";
-	restore;
-	//multipop(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
-	loadi([PTBR+8], [INODE_TABLE+ 16*inode_index + 8]);
-endif;
-
 
 //Setting top of SP to entry point
 [[PTBR+16]*512] = [[PTBR+8]*512+1];

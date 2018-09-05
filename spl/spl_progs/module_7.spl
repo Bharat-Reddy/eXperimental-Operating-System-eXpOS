@@ -2,9 +2,14 @@
 loadi(4,17);
 loadi(5,18);
 
+//disk interrupt
+loadi(6,19);
+loadi(7,20);
+
 //console interrupt
 loadi(8,21);
 loadi(9,22);
+
 
 //shared library
 loadi(63,13);
@@ -76,6 +81,9 @@ endwhile;
 //Initialising terminal status to 0
 [TERMINAL_STATUS_TABLE] = 0;
 
+//Disk terminal status to 0
+[DISK_STATUS_TABLE] = 0;
+
 //---------------------------------------INIT PROCESS -------------------------//
 PTBR=PAGE_TABLE_BASE+20;
 PTLR=10;
@@ -118,101 +126,6 @@ PTLR=10;
 [PROCESS_TABLE+16+15]=10;
 
 [76*512]=[65*512+1];
-
-
-//---------------------------------------- Even numbers executable ------------------------//
-//Loading code pages from disk to memory
-loadi(83,70);
-
-PTBR=PAGE_TABLE_BASE+40;
-PTLR=10;
-
-//Library
-[PTBR+0]=63;
-[PTBR+1]="0100";
-[PTBR+2]=64;
-[PTBR+3]="0100";
-
-//Heap
-[PTBR+4]=84;
-[PTBR+5]="0110";
-[PTBR+6]=85;
-[PTBR+7]="0110";
-
-//Code
-[PTBR+8]=83;
-[PTBR+9]="0100";
-[PTBR+10]=-1;
-[PTBR+11]="0100";
-[PTBR+12]=-1;
-[PTBR+13]="0000";
-[PTBR+14]=-1;
-[PTBR+15]="0000";
-
-//Stack
-[PTBR+16]=86;
-[PTBR+17]="0110";
-[PTBR+18]=87;
-[PTBR+19]="0110";
-
-
-[PROCESS_TABLE+16*2+11]=88;
-[PROCESS_TABLE+16*2+1]=2;
-[PROCESS_TABLE+16*2+4]=CREATED;
-[PROCESS_TABLE+16*2+13]=8*512;
-[PROCESS_TABLE+16*2+12]=0;
-[PROCESS_TABLE+16*2+14]=PAGE_TABLE_BASE+40;
-[PROCESS_TABLE+16*2+15]=10;
-
-[86*512]=[83*512+1];
-
-
-//--------------------------------------- Prime Numbers Executable --------------------------------
-
-//Loading code pages from disk to memory
-loadi(89,71);
-
-PTBR=PAGE_TABLE_BASE+60;
-PTLR=10;
-
-//Library
-[PTBR+0]=63;
-[PTBR+1]="0100";
-[PTBR+2]=64;
-[PTBR+3]="0100";
-
-//Heap
-[PTBR+4]=90;
-[PTBR+5]="0110";
-[PTBR+6]=91;
-[PTBR+7]="0110";
-
-//Code
-[PTBR+8]=89;
-[PTBR+9]="0100";
-[PTBR+10]=-1;
-[PTBR+11]="0100";
-[PTBR+12]=-1;
-[PTBR+13]="0000";
-[PTBR+14]=-1;
-[PTBR+15]="0000";
-
-//Stack
-[PTBR+16]=92;
-[PTBR+17]="0110";
-[PTBR+18]=93;
-[PTBR+19]="0110";
-
-
-[PROCESS_TABLE+16*3+11]=94;
-[PROCESS_TABLE+16*3+1]=3;
-[PROCESS_TABLE+16*3+4]=CREATED;
-[PROCESS_TABLE+16*3+13]=8*512;
-[PROCESS_TABLE+16*3+12]=0;
-[PROCESS_TABLE+16*3+14]=PAGE_TABLE_BASE+60;
-[PROCESS_TABLE+16*3+15]=10;
-
-[92*512]=[89*512+1];
 
 return;
 
