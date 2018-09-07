@@ -64,7 +64,17 @@ restore;
 
 alias userAreaPageNo R8;
 
+//Re-acquiring of user area page
 userAreaPageNo=[PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+11];
+
+//Setting up per-process resource table in last 16 words of user area page
+alias ind R13;
+ind=496;
+while(ind<=511) do
+	[userAreaPageNo*512+ind]=-1;
+	ind=ind+2;
+endwhile;
+//Initially per process resource table is empty
 
 //Reclaiming the same page by incrementing the memory free list entry of user area page
 [MEMORY_FREE_LIST+userAreaPageNo]=[MEMORY_FREE_LIST+userAreaPageNo]+1;

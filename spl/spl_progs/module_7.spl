@@ -117,7 +117,18 @@ PTLR=10;
 [PTBR+19]="0110";
 
 
-[PROCESS_TABLE+16+11]=80;
+[PROCESS_TABLE+16+11]=80; //user area page of init
+
+//Setting up per-process resource table in last 16 words of user area page
+alias ind R13;
+ind=496;
+while(ind<=511) do
+	[80*512+ind]=-1;
+	ind=ind+2;
+endwhile;
+//Initially per process resource table is empty
+
+
 [PROCESS_TABLE+16+1]=1;
 [PROCESS_TABLE+16+4]=CREATED;
 [PROCESS_TABLE+16+13]=8*512;
