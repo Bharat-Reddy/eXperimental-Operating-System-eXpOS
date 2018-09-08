@@ -1,7 +1,3 @@
-backup;
-print "Hi3";
-restore;
-
 alias userSP R0; 
 userSP=SP; //Saving value of user stack
 [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP; //Saving sp value in UPTR field
@@ -23,11 +19,12 @@ alias check R5;
 alias i R6;
 alias inode_index R7;
 
+//extracting inode table entry number of entered file name
 i=0;
 check=0;
 while(i<MAX_FILE_NUM) do
 
-	if([INODE_TABLE+ 16*i + 1]==fileName && [INODE_TABLE+ 16*i]==3) then
+	if([INODE_TABLE+ 16*i + 1]==fileName) then
 		check=1;
 		inode_index=i;
 		break;
@@ -35,10 +32,7 @@ while(i<MAX_FILE_NUM) do
 	i=i+1;
 endwhile;
 
-backup;
-print "Hi3";
-restore;
-//Failure case
+//Failure case(File not found)
 if(check==0) then
 	
 	//Setting return value as -1 (Failure)
@@ -51,7 +45,7 @@ if(check==0) then
 	
 	//changing back to user stack
 	SP = userSP;
-
+	//print "FileNotFound!";
 	ireturn;
 endif;
 
@@ -59,17 +53,28 @@ endif;
 //Calling "Exit Process" function
 alias PID_exit R10;
 PID_exit=[SYSTEM_STATUS_TABLE + 1];
-multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
-
+//multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
+backup;
 R1=3; //Function number of exit in process manager module(Module 1)
 R2=[SYSTEM_STATUS_TABLE + 1];
 call MOD_1;
 
-multipop(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
+restore;
+//multipop(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
 
 alias userAreaPageNo R8;
 
+//Re-acquiring of user area page
 userAreaPageNo=[PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+11];
+
+//Setting up per-process resource table in last 16 words of user area page
+alias ind R13;
+ind=496;
+while(ind<=511) do
+	[userAreaPageNo*512+ind]=-1;
+	ind=ind+2;
+endwhile;
+//Initially per process resource table is empty
 
 //Reclaiming the same page by incrementing the memory free list entry of user area page
 [MEMORY_FREE_LIST+userAreaPageNo]=[MEMORY_FREE_LIST+userAreaPageNo]+1;
@@ -95,93 +100,74 @@ PTBR=PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20;
 [PTBR+2]=64;
 [PTBR+3]="0100";
 
-multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
-
+//multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
+backup;
 //Heap
 R1=1;
 call MOD_2;
 [PTBR+4]=R0;
 [PTBR+5]="0110";
+restore;
+
+backup;
 R1=1;
 call MOD_2;
 [PTBR+6]=R0;
 [PTBR+7]="0110";
+restore;
 
+backup;
 //Stack
 R1=1;
 call MOD_2;
 [PTBR+16]=R0;
 [PTBR+17]="0110";
+restore;
+
+backup;
 R1=1;
 call MOD_2;
 [PTBR+18]=R0;
 [PTBR+19]="0110";
-
-//Code Pages
-if([INODE_TABLE+ 16*[SYSTEM_STATUS_TABLE+1] + 8] != -1) then
-	R1=1;
-	call MOD_2;
-	[PTBR+8]=R0;
-	[PTBR+9]="0100";
-endif;
-if([INODE_TABLE+ 16*[SYSTEM_STATUS_TABLE+1] + 9] != -1) then
-	R1=1;
-	call MOD_2;
-	[PTBR+10]=R0;
-	[PTBR+11]="0100";
-endif;
-if([INODE_TABLE+ 16*[SYSTEM_STATUS_TABLE+1] + 10] != -1) then
-	R1=1;
-	call MOD_2;
-	[PTBR+12]=R0;
-	[PTBR+13]="0100";
-endif;
-if([INODE_TABLE+ 16*[SYSTEM_STATUS_TABLE+1] + 11] != -1) then
-	R1=1;
-	call MOD_2;
-	[PTBR+14]=R0;
-	[PTBR+15]="0100";
-endif;
-
-multipop(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
-
-//Loading code blocks from dist to memory
-backup;
-print "Hi4";
 restore;
 
+backup;
 
+alias j R11;
+alias k R12;
 
-if([INODE_TABLE+ 16*inode_index + 8] != -1) then
-	multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
-	R1=1;
-	call MOD_2;
-	[PTBR+12]=R0;
-	[PTBR+13]="0100";
-	multipop(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
-	loadi([PTBR+8], [INODE_TABLE+ 16*inode_index + 8]);
-endif;
-if([INODE_TABLE+ 16*inode_index + 9] != -1) then
-	R1=1;
-	call MOD_2;
-	[PTBR+12]=R0;
-	[PTBR+13]="0100";
-	loadi([PTBR+10], [INODE_TABLE+ 16*inode_index + 9]);
-endif;
-if([INODE_TABLE+ 16*inode_index + 10] != -1) then
-	R1=1;
-	call MOD_2;
-	[PTBR+12]=R0;
-	[PTBR+13]="0100";
-	loadi([PTBR+12], [INODE_TABLE+ 16*inode_index + 10]);
-endif;
-if([INODE_TABLE+ 16*inode_index + 11] != -1) then
-	R1=1;
-	call MOD_2;
-	[PTBR+12]=R0;
-	[PTBR+13]="0100";
-	loadi([PTBR+14], [INODE_TABLE+ 16*inode_index + 11]);
-endif;
+j=8;
+k=8;
+
+while(j<=11) do
+
+	if([INODE_TABLE+ 16*inode_index + j] != -1) then
+	
+		backup;
+		R1=1; //Function number for get free page in memory manager module
+		call MOD_2; //calling memory manager module
+		[PTBR+k]=R0; //storing codein returned free page 
+		[PTBR+k+1]="0100"; //Permissions for code page
+		restore;
+		//loadi([PTBR+k], [INODE_TABLE+ 16*inode_index + j]); /////////
+		//Calling Disk Load function instead of "LOADI"
+
+		backup;
+		R1=2; //Function number of Disk load in device manager module
+		R2=[SYSTEM_STATUS_TABLE+1]; //argument 1 == PID of process
+		R3=[PTBR+k]; //argument 2 ==  page number to where we should load the disk block 
+		R4=[INODE_TABLE+ 16*inode_index + j]; //argument 3 == disk block number to be loaded
+		call MOD_4; //Calling Device manager module for disk load function
+		restore;
+		
+	endif;
+
+	j=j+1;
+	k=k+2;
+endwhile;
+
+restore;
+
 
 //Setting top of SP to entry point
 [[PTBR+16]*512] = [[PTBR+8]*512+1];

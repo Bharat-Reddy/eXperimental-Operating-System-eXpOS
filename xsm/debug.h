@@ -27,16 +27,18 @@
 #define DEBUG_WATCHCLEAR	13
 #define DEBUG_EXIT			14
 #define DEBUG_HELP			15
-#define DEBUG_VAL			16
+#define DEBUG_LIST			16
+#define DEBUG_VAL			17
 
 /* The following is highly dependent on the OS implementation. */
 #define DEBUG_LOC_PT		28672
 #define MAX_PROC_NUM		16
 #define PT_ENTRY_SIZE		16
-#define DEBUG_PROC_RUNNING	1 
+#define DEBUG_PROC_RUNNING	1
 #define MAX_NUM_PAGES		10
 #define PTBR_PCB_OFFSET		14
 #define DEBUG_PT_BASE		29696
+#define DEBUG_LIST_LEN		10
 
 /* System wide open file table. */
 #define DEBUG_LOC_SWOFT		28928
@@ -68,8 +70,11 @@ struct _debug_status
 {
 	int state;
 	int ip;
+	int skip;
+	int skip_command;
 	int wp[16];
 	int wp_size;
+	char command[DEBUG_COMMAND_LEN];
 }
 debug_status;
 
@@ -104,6 +109,9 @@ debug_command(char *command);
 
 int
 debug_command_code (const char *cmd);
+
+int
+debug_skip_n (int num, int debug_command);
 
 int
 debug_display_all_registers();
@@ -165,7 +173,10 @@ debug_display_usertable();
 int
 debug_display_location (int loc);
 
-void 
+int
+debug_display_list();
+
+void
 debug_display_help ();
 
 #endif

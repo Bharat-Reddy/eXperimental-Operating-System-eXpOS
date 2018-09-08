@@ -59,6 +59,9 @@ loadi(45,58);
 loadi(59,3);
 loadi(60,4);
 
+//Loading Disk Free List
+loadi(61,2);
+
 //Setting memory free list
 alias i R0;
 i=0;
@@ -128,6 +131,20 @@ while(ind<=511) do
 endwhile;
 //Initially per process resource table is empty
 
+//Setting up disk map table for INIT process
+alias disk_map R11;
+disk_map= DISK_MAP_TABLE + 10*1;
+[disk_map]=-1;
+[disk_map+1]=-1;
+[disk_map+2]=-1;
+[disk_map+3]=-1;
+[disk_map+4]=65;
+[disk_map+5]=66;
+[disk_map+6]=-1;
+[disk_map+7]=-1;
+[disk_map+8]=-1;
+[disk_map+9]=-1;
+
 
 [PROCESS_TABLE+16+1]=1;
 [PROCESS_TABLE+16+4]=CREATED;
@@ -139,4 +156,3 @@ endwhile;
 [76*512]=[65*512+1];
 
 return;
-

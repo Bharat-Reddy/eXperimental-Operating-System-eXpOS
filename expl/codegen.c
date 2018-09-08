@@ -3,7 +3,7 @@ int res,counter = -1,label = 3,temporary = 0,offset= 0 ,offset1 = 0,Loffset = 0,
 //w1 & w2 stores the start and end of while loop (label numbers) which are used by break and continue to transfer control.
 //arg_count is to count the number of arguments in exposcall function.
 int class_addr; //pointer to the class in the data structure created for classes i.e 4096 + (8*ClassIndex)
-struct Lsymbol* Ltemp;																							
+struct Lsymbol* Ltemp;
 int tree_iter = 0,flditer = 0,we1 = 0,we2 = 0; //we1 and we2 are boolean variables for read and write in exposcall
 struct Gsymbol *Gtemp;
 struct Paramstruct *Argtemp,*Arg_callee;
@@ -47,7 +47,7 @@ int codegen(struct ASTNode* root)
 	{
 		return 0;
 	}
-	
+
 	if(root -> nodetype == NODE_EXPR )
 	{
 		tree_iter = 0;
@@ -76,10 +76,10 @@ int codegen(struct ASTNode* root)
 				{
 					Argtemp = Argtemp -> next;
 				}
-			}	
+			}
 			a = codegen(Ttemp -> ptr1);
 			fprintf(intermediate, "PUSH R%d\n", a);
-			freereg();	
+			freereg();
 			Ttemp =  Ttemp -> ptr2;
 			tree_iter--;
 		}
@@ -101,7 +101,7 @@ int codegen(struct ASTNode* root)
 			}
 			a = codegen(Ttemp);
 			fprintf(intermediate, "PUSH R%d\n", a);
-			freereg();	
+			freereg();
 	}
 	else if(root -> nodetype == DEFAULT)
 	{
@@ -113,13 +113,13 @@ int codegen(struct ASTNode* root)
 	    temp = root;
 
 		switch(temp -> nodetype)
-		{				
+		{
 			case NODE_LE  :
 								r1 = codegen(temp -> ptr1);
 								r2 = codegen(temp -> ptr2);
 								fprintf(intermediate, "LE R%d,R%d\n",r1,r2);
 								freereg();
-								return r1;		
+								return r1;
 								break;
 			case NODE_GE  :
 								r1 = codegen(temp -> ptr1);
@@ -192,7 +192,7 @@ int codegen(struct ASTNode* root)
 								l2 = getlabel();
 								fprintf(intermediate, "JMP L%d\n",l2);
 								fprintf(intermediate, "L%d:\n",l1);
-								fprintf(intermediate, "MOV R%d,0\n",r1);										
+								fprintf(intermediate, "MOV R%d,0\n",r1);
 								fprintf(intermediate, "L%d:\n",l2);
 								return r1;
 			case NODE_ID   :
@@ -207,7 +207,7 @@ int codegen(struct ASTNode* root)
 										Loffset = Loffset + 1;
 										Ltemp = Ltemp -> next;
 									}
-									
+
 									r2 = getreg();
 									fprintf(intermediate, "MOV R%d,BP\n",r2);
 									fprintf(intermediate, "MOV R%d,%d\n",r1,Loffset+1);
@@ -215,7 +215,7 @@ int codegen(struct ASTNode* root)
 									if(isamp)
 									{
 										fprintf(intermediate, "MOV R%d,R%d\n",r1,r2);
-										isamp = 0; 
+										isamp = 0;
 									}
 									else
 									{
@@ -242,7 +242,7 @@ int codegen(struct ASTNode* root)
 											offset = offset + 1;
 											Argtemp = Argtemp -> next;
 										}
-									
+
 										r2 = getreg();
 										fprintf(intermediate, "MOV R%d,BP\n",r2);
 			 							r3 = getreg();
@@ -257,12 +257,12 @@ int codegen(struct ASTNode* root)
 											isamp = 0;
 											fld = 0;
 										}
-				
+
 										else
 										{
 											fprintf(intermediate, "MOV R%d,[R%d]\n",r1,r2); //BP-2-(offset+1)
 										}
-										
+
 										freereg();
 									}
 									else
@@ -287,7 +287,7 @@ int codegen(struct ASTNode* root)
 								break;
 
 
-			case NODE_FIELD :		
+			case NODE_FIELD :
 								r1 = getreg();
 								Ltemp = LLookup(temp -> name);
 								if(Ltemp != NULL)
@@ -299,7 +299,7 @@ int codegen(struct ASTNode* root)
 										Loffset = Loffset + 1;
 										Ltemp = Ltemp -> next;
 									}
-									
+
 									r2 = getreg();
 									fprintf(intermediate, "MOV R%d,BP\n",r2);
 									fprintf(intermediate, "MOV R%d,%d\n",r1,Loffset+1);
@@ -340,7 +340,7 @@ int codegen(struct ASTNode* root)
 								else
 								{
 									Argtemp = PLookup(temp -> name);
-	
+
 									if(Argtemp != NULL)
 									{
 										Argtemp = Phead;
@@ -351,7 +351,7 @@ int codegen(struct ASTNode* root)
 											offset = offset + 1;
 											Argtemp = Argtemp -> next;
 										}
-									
+
 										r2 = getreg();
 										fprintf(intermediate, "MOV R%d,BP\n",r2);
 			 							r3 = getreg();
@@ -444,7 +444,7 @@ int codegen(struct ASTNode* root)
 									if(fld)
 									{
 										fprintf(intermediate, "MOV R%d,R%d\n",offset,r1);
-										fld = 0;	
+										fld = 0;
 									}
 									freereg();
 									return offset;
@@ -492,7 +492,7 @@ int codegen(struct ASTNode* root)
 									fprintf(intermediate, "L%d:\n",l1);
 									fprintf(intermediate, "INT 10\n");
 									fprintf(intermediate, "L%d:\n",l2);
-									
+
 									return r1;
 									break;
 			case NODE_MOD :
@@ -553,7 +553,7 @@ int codegen(struct ASTNode* root)
 				 							r2 = getreg();
 				 							fprintf(intermediate, "MOV R%d,2\n",r2);
 				 							fprintf(intermediate, "SUB R%d,R%d\n",r1,r2);
-				 							
+
 				 							fprintf(intermediate, "MOV R%d,%d\n",r2,(offset+1));
 											fprintf(intermediate, "SUB R%d,R%d\n",r1,r2);
 											freereg();
@@ -682,7 +682,7 @@ int codegen(struct ASTNode* root)
 											}
 										}
 									}
-									
+
 		 							fprintf(intermediate, "ADD SP,2\n");
 		 							freeallreg();
 		 							fprintf(intermediate, "CALL 0\n");
@@ -727,9 +727,9 @@ int codegen(struct ASTNode* root)
 		 							fprintf(intermediate, "MOV R0,[2044]\n");
 		 							fprintf(intermediate, "PUSH R0\n"); //Argument 2
 									freereg();
-									temporary++;	
+									temporary++;
 									status = counter;
-									
+
 		 							fprintf(intermediate, "ADD SP,2\n");
 		 							freeallreg();
 		 							fprintf(intermediate, "CALL 0\n");
@@ -751,7 +751,7 @@ int codegen(struct ASTNode* root)
 
 			//						fprintf(intermediate, "MOV [2042],R%d\n",number); // we are writing the value to the dummy loc 2042
 																					// sending this loc to write sys call to print value
-									
+
 									for(i = 0; i <= counter; i++)
 	 									fprintf(intermediate, "PUSH R%d\n",i);
 		 							status = counter;
@@ -768,7 +768,7 @@ int codegen(struct ASTNode* root)
 		 							freeallreg();
 		 							fprintf(intermediate, "CALL 0\n");
 		 							fprintf(intermediate, "SUB SP,5\n");
-									
+
 									for(i = status; i >= 0; i--)
 		                            {
 		 								fprintf(intermediate, "POP R%d\n",i);
@@ -868,7 +868,7 @@ int codegen(struct ASTNode* root)
 		 							freereg();
 		 							return r1;
 		 							break;
-		 	case NODE_RET : 
+		 	case NODE_RET :
 	 								res = codegen(temp -> ptr2);
 		 							r1 = getreg();
 		 							fprintf(intermediate, "MOV R%d,BP\n",r1);
@@ -881,7 +881,7 @@ int codegen(struct ASTNode* root)
 		 							freereg();
 		 							Ltemp = Lhead;
 		 							while(Ltemp != NULL)
-		 							{                                                                
+		 							{
                                         fprintf(intermediate, "POP R0\n");
                                         Ltemp = Ltemp -> next;
                                     }
@@ -900,7 +900,7 @@ int codegen(struct ASTNode* root)
             case NODE_BRKP :
 		 							fprintf(intermediate, "BRKP\n");
             						break;
-            case NODE_ALLOC :	
+            case NODE_ALLOC :
             						for(i = 0; i <= counter; i++)
 		 								fprintf(intermediate, "PUSH R%d\n",i);
 		 							status = counter;
@@ -955,14 +955,14 @@ int codegen(struct ASTNode* root)
 		 								fprintf(intermediate, "POP R%d\n",i);
                                     }
 		 							counter = status;
-		 							return;
+		 							return 0;
 		 							break;
 		 	case NODE_NILL :
 				 					r1 = getreg();
 			 						fprintf(intermediate, "MOV R%d,-1\n",r1);
 				 					return r1;
 				 					break;
-		 	case NODE_INIT : 
+		 	case NODE_INIT :
 				 					for(i = 0; i <= counter; i++)
 		 								fprintf(intermediate, "PUSH R%d\n",i);
 
@@ -986,7 +986,7 @@ int codegen(struct ASTNode* root)
 		 							return 0;
 		 							break;
 
-		 	case NODE_EXPOSCALL :	
+		 	case NODE_EXPOSCALL :
 		 							for(i = 0; i <= counter; i++)
 		 								fprintf(intermediate, "PUSH R%d\n",i);
 		 							status = counter;
@@ -1000,18 +1000,18 @@ int codegen(struct ASTNode* root)
 
 		 							if(strcmp(temp1 -> name, "Read") == 0)
 		 								we2 = 1;
-                                                                       
-                                                                        if(temp1->nodetype==NODE_STRVAL){        
+
+                                                                        if(temp1->nodetype==NODE_STRVAL){
 		 							        fprintf(intermediate, "MOV R0,\"%s\"\n",temp1 -> name);
 		 							        fprintf(intermediate, "PUSH R0\n"); //function code
 		 							}
-		 							else if(temp1->nodetype==NODE_ID) 
+		 							else if(temp1->nodetype==NODE_ID)
 		 							{
 		 							      number = codegen(temp1);
 		 							      fprintf(intermediate, "MOV R0,R%d\n",number);
 		 							      fprintf(intermediate, "PUSH R0\n"); //function code
-		 							        
-		 							}        
+
+		 							}
 		 							arg_count++;
 		 							temp1 = temp1 -> ptr1;
 
@@ -1091,8 +1091,8 @@ int codegen(struct ASTNode* root)
 					default:
 									printf("NODETYPE is %d\n",temp -> nodetype);
 									printf("Error : Unknown node Type\n");
-									exit(1);	
-		}														
+									exit(1);
+		}
 	}
 	return 0;
 }

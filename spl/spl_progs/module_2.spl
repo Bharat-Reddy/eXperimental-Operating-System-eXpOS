@@ -8,9 +8,11 @@ if(functionNum==1) then //Get free page
 	while([SYSTEM_STATUS_TABLE+2]==0) do //While MEM_FREE_COUNT is 0(i.e. no free memory available)
 		[PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+4]=WAIT_MEM;
 
-		multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
+		//multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
+		backup;
 		call MOD_5;
-		multipop(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);		
+		restore;
+		//multipop(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);		
 	endwhile;
 
 	[SYSTEM_STATUS_TABLE+3]=[SYSTEM_STATUS_TABLE+3]-1; //Decrementing WAIT_MEM_COUNT
@@ -41,4 +43,74 @@ if(functionNum==2) then //Release page
 	endif;
 	
 	return;
+endif;
+
+if(functionNum==4) then //release block function
+
+	alias block_no R2;
+	[DISK_FREE_LIST+block_no]=[DISK_FREE_LIST+block_no]-1;
+	return;
+
+endif;
+
+if(functionNum==5) then //get code page
+	
+	alias currentPID R12;
+	alias block_no R13;
+	currentPID=R2;
+	block_no=R3;
+
+	alias i R4;
+	alias disk_map R5;
+	i=0;
+	while(i<=15) do
+		disk_map = DISK_MAP_TABLE + 10*i; //disk map table base
+		
+		//Checking if the required block is already present as any code page
+		if([disk_map+4]==block_no) then 
+			if([PAGE_TABLE_BASE + i*20 + 8]!=-1) then
+				R0=[PAGE_TABLE_BASE + i*20 + 8];
+				[MEMORY_FREE_LIST+R0]=[MEMORY_FREE_LIST+R0]+1; //incrementng memory free list
+				return;
+			endif;
+		endif;
+	
+		if([disk_map+5]==block_no) then
+			if([PAGE_TABLE_BASE + i*20 + 10]!=-1) then
+				R0=[PAGE_TABLE_BASE + i*20 + 10];
+				[MEMORY_FREE_LIST+R0]=[MEMORY_FREE_LIST+R0]+1;
+				return;
+			endif;
+		endif;
+
+		if([disk_map+6]==block_no) then
+			if([PAGE_TABLE_BASE + i*20 + 12]!=-1) then
+				R0=[PAGE_TABLE_BASE + i*20 + 12];
+				[MEMORY_FREE_LIST+R0]=[MEMORY_FREE_LIST+R0]+1;
+				return;
+			endif;
+		endif;
+
+		if([disk_map+7]==block_no) then
+			if([PAGE_TABLE_BASE + i*20 + 14]!=-1) then
+				R0=[PAGE_TABLE_BASE + i*20 + 14];
+				[MEMORY_FREE_LIST+R0]=[MEMORY_FREE_LIST+R0]+1;
+				return;
+			endif;
+		endif;
+		
+		i = i + 1;
+	endwhile;
+	
+	//If the code page is not in memory
+		R1=1;
+		call MOD_2;
+		R1=2; //Function number of Disk load in device manager module
+		R2=currentPID; //argument 1 == PID of process
+		R3=R0; //argument 2 ==  page number to where we should load the disk block 
+		R4=block_no; //argument 3 == disk block number to be loaded
+		call MOD_4; //Calling Device manager module for disk load function
+	
+	return;
+
 endif;

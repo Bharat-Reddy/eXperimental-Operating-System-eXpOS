@@ -1,3 +1,5 @@
+//Exec system call
+
 alias userSP R0; 
 userSP=SP; //Saving value of user stack
 [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP; //Saving sp value in UPTR field
@@ -14,7 +16,6 @@ offset = (userSP - 4) % 512;
 fileNameAddr = (physicalPageNum * 512) + offset;
 alias fileName R4;
 fileName=[fileNameAddr];
-
 alias check R5;
 alias i R6;
 alias inode_index R7;
@@ -48,7 +49,6 @@ if(check==0) then
 	//print "FileNotFound!";
 	ireturn;
 endif;
-
 
 //Calling "Exit Process" function
 alias PID_exit R10;
@@ -100,21 +100,14 @@ PTBR=PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20;
 [PTBR+2]=64;
 [PTBR+3]="0100";
 
-//multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
-backup;
-//Heap
-R1=1;
-call MOD_2;
-[PTBR+4]=R0;
-[PTBR+5]="0110";
-restore;
+//Invalidating heap pages in page table
 
-backup;
-R1=1;
-call MOD_2;
-[PTBR+6]=R0;
-[PTBR+7]="0110";
-restore;
+[PTBR+4]=-1;
+[PTBR+5]="0000";
+
+[PTBR+6]=-1;
+[PTBR+7]="0000";
+
 
 backup;
 //Stack
@@ -130,44 +123,47 @@ call MOD_2;
 [PTBR+18]=R0;
 [PTBR+19]="0110";
 restore;
+///////////////////////////////
 
+//Setting first code page using "Get code page" function in memory management module
 backup;
 
-alias j R11;
-alias k R12;
+R1=5; //Function number for get code page in memory manager module
+R2=[SYSTEM_STATUS_TABLE+1]; //argument 1 == PID of process
+R3=[INODE_TABLE+ 16*inode_index + 8]; //argument 2 == first code block
 
-j=8;
-k=8;
+call MOD_2;
 
-while(j<=11) do
+[PTBR+8]=R0; //Setting up first code page
 
-	if([INODE_TABLE+ 16*inode_index + j] != -1) then
-	
-		backup;
-		R1=1; //Function number for get free page in memory manager module
-		call MOD_2; //calling memory manager module
-		[PTBR+k]=R0; //storing codein returned free page 
-		[PTBR+k+1]="0100"; //Permissions for code page
-		restore;
-		//loadi([PTBR+k], [INODE_TABLE+ 16*inode_index + j]); /////////
-		//Calling Disk Load function instead of "LOADI"
-
-		backup;
-		R1=2; //Function number of Disk load in device manager module
-		R2=[SYSTEM_STATUS_TABLE+1]; //argument 1 == PID of process
-		R3=[PTBR+k]; //argument 2 ==  page number to where we should load the disk block 
-		R4=[INODE_TABLE+ 16*inode_index + j]; //argument 3 == disk block number to be loaded
-		call MOD_4; //Calling Device manager module for disk load function
-		restore;
-		
-	endif;
-
-	j=j+1;
-	k=k+2;
-endwhile;
+[PTBR+9]="0100";
 
 restore;
 
+//Invalidating remaining 3 code pages
+backup;
+alias t R14;
+t=10;
+while(t<=14) do
+	[PTBR+t]=-1;
+	[PTBR+t+1]="0000";
+	t=t+2;
+endwhile;
+restore;
+
+//Initialising disk map table of new process
+alias disk_map R11;
+disk_map= DISK_MAP_TABLE + 10*[SYSTEM_STATUS_TABLE + 1];
+[disk_map]=-1;
+[disk_map+1]=-1;
+[disk_map+2]=-1;
+[disk_map+3]=-1;
+[disk_map+4]=[INODE_TABLE+ 16*inode_index + 8];
+[disk_map+5]=[INODE_TABLE+ 16*inode_index + 9];
+[disk_map+6]=[INODE_TABLE+ 16*inode_index + 10];
+[disk_map+7]=[INODE_TABLE+ 16*inode_index + 11];
+[disk_map+8]=-1;
+[disk_map+9]=-1;
 
 //Setting top of SP to entry point
 [[PTBR+16]*512] = [[PTBR+8]*512+1];

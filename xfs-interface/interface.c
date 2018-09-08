@@ -8,11 +8,11 @@
 /* For command completion. */
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <ctype.h>
 #include "interface.h"
 #include "fileSystem.h"
 #include "exception.h"
 #include "diskUtility.h"
-
 
 jmp_buf exp_point;//for exception handling
 
@@ -96,7 +96,7 @@ xfs_cli_completion(const char *text, int start, int end)
 
 	curr_context = malloc(start + 1);
 	strncpy (curr_context, rl_line_buffer, start);
-	
+
 	/* strncpy is touchy, we have to take care of our frontiers. */
 	curr_context[start] = '\0';
 
@@ -110,26 +110,40 @@ xfs_cli_completion(const char *text, int start, int end)
 		matches = rl_completion_matches (text, xfs_cli_command_gen);
 	else if (!strcmp(pch, "load"))
 	{
-		if (rl_line_buffer[start - 1] == '=')
-			matches = rl_completion_matches(text, xfs_cli_int_gen);
-		else if (!strtok(NULL, " "))
-			matches = rl_completion_matches(text, xfs_cli_opt_gen);
-	}
-	else if (!strcmp(pch, "rm"))
-	{
-		pch = strtok(NULL, " ");
-
-		if (!pch)
-			matches = rl_completion_matches(text, xfs_cli_opt_gen);
-		else if (rl_line_buffer[start - 1] == '=')
+		if (start>=6 &&
+					rl_line_buffer[start - 6] == '-' &&
+					rl_line_buffer[start - 5] == '-' &&
+					rl_line_buffer[start - 4] == 'i' &&
+					rl_line_buffer[start - 3] == 'n' &&
+					rl_line_buffer[start - 2] == 't' &&
+		 			rl_line_buffer[start - 1] == '=')
 			matches = rl_completion_matches(text, xfs_cli_int_gen);
 		else
-			matches = rl_completion_matches(text, xfs_cli_file_gen);
+		{
+			pch = strtok(NULL, " ");
+			if(pch!=NULL && !strcmp(pch, "--module"))
+			{
+				matches = rl_completion_matches(text, xfs_cli_module_gen);
+			}
+			else
+			 matches = rl_completion_matches(text, xfs_cli_opt_gen);
+		}
 	}
-	else if (!strcmp(pch, "cat"))
+	else if(!strcmp(pch, "export"))
 	{
 		matches = rl_completion_matches(text, xfs_cli_file_gen);
 	}
+	else if(!strcmp(pch, "dump"))
+	{
+		matches = rl_completion_matches(text, xfs_cli_dump_gen);
+	}
+	else if (!strcmp(pch, "cat") || !strcmp(pch, "rm"))
+	{
+		matches = rl_completion_matches(text, xfs_cli_file_gen);
+	}
+
+	if(matches == NULL)
+		rl_completion_append_character = '\0';
 
 	free(curr_context);
 	return matches;
@@ -138,9 +152,9 @@ xfs_cli_completion(const char *text, int start, int end)
 char*
 xfs_cli_command_gen (const char *text, int state)
 {
-	const char *commands[8]={"fdisk", "load", "rm", "ls", "cat", "copy", "exit", "help"};
+	const char *commands[12]={"fdisk", "run", "load", "export", "rm", "ls", "df", "cat", "copy", "dump", "exit", "help"};
 	static int index, len;
-	const int comm_len = 8;
+	const int comm_len = 12;
 
 	if (state == 0)
 	{
@@ -158,9 +172,9 @@ xfs_cli_command_gen (const char *text, int state)
 char*
 xfs_cli_opt_gen(const char *text, int state)
 {
-	const char *options[12] = {"--exec", "--int=", "--exhandler", "--os", "--data"};
+	const char *options[10] = {"--int=", "--exec", "--data", "--init", "--os", "--idle", "--shell", "--library", "--exhandler", "--module"};
 	static int index, len;
-	const int opt_len = 5;
+	const int opt_len = 10;
 
 	if (state == 0)
 	{
@@ -173,7 +187,7 @@ xfs_cli_opt_gen(const char *text, int state)
 		if (!strncmp(text, options[index], len))
 		{
 			/* A bit of hacking, prevent readline from appending a space after possible --int=. */
-			if (index == 1)
+			if (index == 0)
 				rl_completion_append_character = '\0';
 			return strdup(options[index++]);
 		}
@@ -185,9 +199,9 @@ xfs_cli_opt_gen(const char *text, int state)
 char*
 xfs_cli_int_gen (const char *text, int state)
 {
-	const char *ints[8]={"1", "2", "3", "4", "5", "6", "7", "timer"};
+	const char *ints[18]={"4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "timer", "disk", "console"};
 	static int index, len;
-	const int ints_len = 8;
+	const int ints_len = 18;
 
 	if (state == 0)
 	{
@@ -198,6 +212,46 @@ xfs_cli_int_gen (const char *text, int state)
 	for (; index < ints_len; ++index)
 		if (!strncmp(text, ints[index], len))
 			return strdup(ints[index++]);
+
+	return NULL;
+}
+
+char*
+xfs_cli_module_gen(const char *text, int state)
+{
+	const char *options[8] = {"0", "1", "2", "3", "4", "5", "6", "7"};
+	static int index, len;
+	const int opt_len = 8;
+
+	if (state == 0)
+	{
+		index = 0;
+		len = strlen(text);
+	}
+
+	for (; index < opt_len; ++index)
+		if (!strncmp(text, options[index], len))
+			return strdup(options[index++]);
+
+	return NULL;
+}
+
+char*
+xfs_cli_dump_gen(const char *text, int state)
+{
+	const char *options[2] = {"--inodeusertable", "--rootfile"};
+	static int index, len;
+	const int opt_len = 2;
+
+	if (state == 0)
+	{
+		index = 0;
+		len = strlen(text);
+	}
+
+	for (; index < opt_len; ++index)
+		if (!strncmp(text, options[index], len))
+			return strdup(options[index++]);
 
 	return NULL;
 }
@@ -254,8 +308,8 @@ xfs_cli_file_gen (const char *text, int state)
 	return result;
 }
 
-/* 
-Function to invoke Command Line interface 
+/*
+Function to invoke Command Line interface
 */
 void cli(int argc, char **argv)
 {
@@ -267,11 +321,11 @@ void cli(int argc, char **argv)
 		i=2;
 		while(i<argc)
 		{
-		
+
 			sprintf(command,"%s %s", command, argv[i]);
 			i++;
-		}		
-		runCommand(command);	
+		}
+		runCommand(command);
 	}
 	else
 	{
@@ -281,25 +335,26 @@ void cli(int argc, char **argv)
 	}
 }
 
-/* 
-Function to process commands 
+/*
+Function to process commands
 */
 void runCommand(char command[])
 {
 	char *name = strtok(command, " ");
 	char *arg1, *arg2, *arg3;
-	
+
 	char * line = NULL;
 	int exp_occured;
 	exp_occured = setjmp(exp_point);
 	if(exp_occured){
-		exception_printErrorMessage(exp_occured);	
+		exception_printErrorMessage(exp_occured);
 		return;
 	}
-	
+
 	if(strcmp(name,"help")==0)		//"help" to display all commands
 	{
 		printf(" fdisk \n\t Format the disk with XFS filesystem\n");
+		printf(" run <pathname> \n\t Executes the set of xfs-interface commands sequentially \n");
 		printf(" load --exec <pathname> \n\t Loads an executable file to XFS disk \n");
 		printf(" load --data <pathname> \n\t Loads a data file to XFS disk \n");
 		printf(" load --init <pathname> \n\t Loads INIT code to XFS disk \n");
@@ -323,14 +378,14 @@ void runCommand(char command[])
 		printf(" dump --rootfile \n\t Copies the contents of root file to an external UNIX file named rootfile.txt\n");
 		printf(" exit \n\t Exit the interface\n");
 	}
-	
-	
+
+
 	else if (strcmp(name,"fdisk")==0)	//formatting the disk with XFS partition
 	{
 		printf("Formatting Complete. \"disk.xfs\" created.\n");
-		formatDisk(FORMAT);		
+		formatDisk(FORMAT);
 	}
-	
+
 	else if (strcmp(name, "run") == 0)	//batch process commands from file
 	{
 		arg1 = strtok(NULL, " ");
@@ -351,23 +406,27 @@ void runCommand(char command[])
 	else if (strcmp(name,"load")==0) 	//loads files to XFS disk.
 	{
 		arg1 = strtok(NULL, " ");
-		arg2 = strtok(NULL, " ");	
-		arg3 = strtok(NULL, " ");	
+		arg2 = strtok(NULL, " ");
+		arg3 = strtok(NULL, " ");
 
-		char *int_command = strtok(arg1, "=");	
+		char *int_command = strtok(arg1, "=");
 		char *intType = strtok(NULL, "=");
 		char *fileName = (char*)malloc(101*sizeof(char));
-		strncpy(fileName,arg2,100);
-		
+
+		if(!arg2)
+			fileName = NULL;
+		else
+			strncpy(fileName,arg2,100);
+
 		if(fileName!=NULL)
 			fileName[100] = '\0';
 		else
 		{
 			printf("Missing <pathname> for load. See \"help\" for more information\n");
 			return;
-		}		
-				
-		if (strcmp(arg1,"--exec")==0)	
+		}
+
+		if (strcmp(arg1,"--exec")==0)
 		{
 			char *c;
 			if (strlen(basename(fileName)) > 12)
@@ -375,26 +434,26 @@ void runCommand(char command[])
 				printf("Filename is more than 12 characters long\n");
 				return;
 			}
-			
+
 			c = strrchr(fileName,'.');
 			if (c == NULL || strcmp(c,".xsm") != 0)
 			{
 				printf("Filename does not have \".xsm\" extension\n");
 				return;
 			}
-			
+
 			loadExecutableToDisk(fileName);	 //loads executable file to disk.
-		}	
-			
-		else if (strcmp(arg1,"--init")==0)	
+		}
+
+		else if (strcmp(arg1,"--init")==0)
 			loadINITCode(fileName);			 //loads init code to disk
-		else if (strcmp(arg1,"--shell")==0)	
+		else if (strcmp(arg1,"--shell")==0)
 			loadShellCode(fileName);			 //loads init code to disk
-		else if (strcmp(arg1,"--library")==0)	
+		else if (strcmp(arg1,"--library")==0)
 			loadLibraryCode(fileName);			 //loads init code to disk
-		else if (strcmp(arg1,"--idle")==0)	
+		else if (strcmp(arg1,"--idle")==0)
 			loadIdleCode(fileName);			 //loads init code to disk
-		else if (strcmp(arg1,"--data")==0) 
+		else if (strcmp(arg1,"--data")==0)
 		{
 			char *c;
 			if (strlen(basename(fileName)) > 12)
@@ -402,14 +461,14 @@ void runCommand(char command[])
 				printf("Filename is more than 12 characters long\n");
 				return;
 			}
-			
+
 			c = strrchr(fileName,'.');
 			if (c == NULL || strcmp(c,".dat") != 0)
 			{
 				printf("Filename does not have \".dat\" extension\n");
 				return;
 			}
-			
+
 			loadDataToDisk(fileName);		 //loads data file to disk.
 		}
 		else if (strcmp(arg1,"--os")==0)
@@ -431,7 +490,7 @@ void runCommand(char command[])
 			else
 			{
 				int intNo = atoi(intType);
-				if(intNo >=1 && intNo <=NO_OF_INTERRUPTS)
+				if(intNo >=4 && intNo <=NO_OF_INTERRUPTS)
 					loadIntCode(fileName, intNo);
 				else
 				{
@@ -451,15 +510,15 @@ void runCommand(char command[])
 				return;
 			}
 		}
-		else if (strcmp(arg1,"--exhandler")==0) 
+		else if (strcmp(arg1,"--exhandler")==0)
  			{
 				loadExHandlerToDisk(fileName);		 //loads exception handler routine to disk.
 			}
 		else
 			printf("Invalid argument \"%s\" for load. See \"help\" for more information\n",arg1);
 		free(fileName);
-	}	
-	
+	}
+
 	else if (strcmp(name,"rm")==0) 	//removes files to XFS disk.
 	{
 		arg1 = strtok(NULL, " ");
@@ -468,21 +527,28 @@ void runCommand(char command[])
 			deleteFileFromDisk(arg1);
 		else
 			printf("Missing <xfs_filename> for rm. See \"help\" for more information\n");
-	}	
-	
+	}
+
 	else if (strcmp(name,"export")==0) 	//removes files to XFS disk.
 	{
 		arg1 = strtok(NULL, " ");
 		arg2 = strtok(NULL, " ");
-		exportFile(arg1,arg2);
-	}	
+		if(arg2!=NULL){
+			exportFile(arg1,arg2);
+		}
+		else
+		{
+			printf("Missing <pathname> for export. See \"help\" for more information\n");
+			return;
+		}
+	}
 
 	else if (strcmp(name,"ls")==0)		//Lists all files.
 		listAllFiles();
-		
+
 	else if (strcmp(name,"df")==0)		//Lists disk free list
 		displayDiskFreeList();
-				
+
 	else if (strcmp(name,"cat")==0)		//Displays contents of a file
 	{
 		arg1 = strtok(NULL, " ");
@@ -490,14 +556,14 @@ void runCommand(char command[])
 		if(fileName!=NULL)
 		{
 			//fileName[WORD_SIZE+1] = '\n';
-			
+
 			displayFileContents(fileName);
 		}
 		else
 		{
 			printf("Missing <xfs_filename> for cat. See \"help\" for more information\n");
 			return;
-		}	
+		}
 	}
 
 	else if (strcmp(name,"copy")==0)		//Copies blocks from Disk to UNIX file.
@@ -509,15 +575,15 @@ void runCommand(char command[])
 		{
 			printf("Insufficient arguments for \"copy\". See \"help\" for more information\n");
 			return;
-		}	
+		}
 		else
 		{
 			int startBlock = atoi(arg1);
-			int endBlock = atoi(arg2);	
-			char *fileName = arg3;			
+			int endBlock = atoi(arg2);
+			char *fileName = arg3;
 			fileName[50] = '\0';
 			copyBlocksToFile (startBlock,endBlock,fileName);
-		}	
+		}
 	}
 
 	else if (strcmp(name,"dump")==0) 	//loads files to XFS disk.
