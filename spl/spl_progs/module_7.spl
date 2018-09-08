@@ -154,5 +154,4 @@ disk_map= DISK_MAP_TABLE + 10*1;
 [PROCESS_TABLE+16+15]=10;
 
 [76*512]=[65*512+1];
-
 return;

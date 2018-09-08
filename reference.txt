@@ -1,0 +1,14 @@
+Module_0 : Resource manager module(Terminal Acquire and release)
+Module_1 : Process Manager Module(Free user area page, exit process, free page table)
+Module_2 : Memory Management module
+Module_4 : Device manager module(Terminal write and Terminal Read)
+Module_5 : Scheduler
+Module_7 : Boot module
+
+
+int_7 : cointains write system call(calls terminal write in module_4)
+int_6 : cointains read system call
+int_10 : Terminating a process
+
+sample_timer : Timer interrupt
+console_interrupt : console Interrupt handler

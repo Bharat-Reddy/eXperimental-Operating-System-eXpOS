@@ -1,0 +1,42 @@
+type
+linkedlist{
+    int data;
+    linkedlist next;
+}
+endtype
+int main()
+{
+	decl
+		linkedlist var,pre,head,curr;
+		int temp,n,i,p;
+	enddecl
+	
+	begin
+
+		temp = exposcall ( "Read" , -1, n );
+		i=0;
+		temp=initialize();
+		
+		head=alloc();
+	    while(i < n) do
+	    	temp = exposcall ( "Read" , -1, p );
+		    if(head==null) then
+		    	head.data=p;
+		    	head.next=null;
+		    	curr=head;
+	    	else
+	    		var=alloc();
+				var.data=p;
+		        var.next=null;
+		        curr.next=var;
+		        curr=var;
+	    	endif;
+	        i=i+1;
+	    endwhile;
+		while(head!=null) do
+			temp = exposcall ( "Write" , -2, head.data);
+			head=head.next;
+		endwhile;
+		return 0;
+	end
+}
