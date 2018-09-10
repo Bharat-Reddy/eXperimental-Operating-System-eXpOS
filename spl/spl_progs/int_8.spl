@@ -1,3 +1,5 @@
+//FORK
+
 //set mode flag of cureent process to 8(read system call)
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 8;
 
@@ -5,18 +7,21 @@
 alias userSP R13;
 userSP=SP;
 
+alias new_PTBR R15;
+
 //switch to kernel stack
 [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
 SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
 
 //Invoking get pcb function to get a new pid for child process
 alias new_pid R14;
-multipush(R13);
+//multipush(R13);
 R1=1;
 R2=[SYSTEM_STATUS_TABLE+1];
 call MOD_1;
 new_pid=R0;
-multipop(R13);
+
+//multipop(R13);
 
 if(new_pid==-1) then
 	alias physicalAddrRetVal R12;
@@ -30,7 +35,7 @@ if(new_pid==-1) then
 	ireturn;
 endif;
 
-PTBR=PAGE_TABLE_BASE+new_pid*20;
+new_PTBR=PAGE_TABLE_BASE+new_pid*20;
 
 //Allocating Stack pages
 
@@ -38,16 +43,16 @@ backup;
 //Stack Page-1
 R1=1;
 call MOD_2;
-[PTBR+16]=R0;
-[PTBR+17]="0110";
+[new_PTBR+16]=R0;
+[new_PTBR+17]=[PTBR+17];
 restore;
 
 backup;
 //Stack Page-2
 R1=1;
 call MOD_2;
-[PTBR+18]=R0;
-[PTBR+19]="0110";
+[new_PTBR+18]=R0;
+[new_PTBR+19]=[PTBR+19];
 restore;
 
 //Allocating user area page
@@ -57,7 +62,6 @@ R1=1;
 call MOD_2;
 [PROCESS_TABLE+16*new_pid+11]=R0;
 restore;
-
 ////////////////Setting up Process Table entries of new process/////////////////
 
 //Copiying "user id" field of process table from parent process table to child process table
@@ -84,7 +88,7 @@ restore;
 //Setting "TICK field" of child process in process table to zero
 [PROCESS_TABLE + 16*new_pid + 0]=0;
 
-//PID of parent == PPID of child
+//PPID of child == PID of parent
 [PROCESS_TABLE + 16*new_pid + 2]=[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 1];
 
 //State of child process is set to created
@@ -107,49 +111,26 @@ alias i R10;
 i=0;
 while(i<=9) do
 	[disk_map+i]=[disk_map_old+i];
+	i=i+1;
 endwhile;
 
 //Setting up page table entries of child process(Sharing pages)
 //Copiying library entries
-[PTBR+0]=[PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20+0];
-[MEMORY_FREE_LIST+[PTBR+0]]=[MEMORY_FREE_LIST+[PTBR+0]]+1;
-[PTBR+1]=[PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20+1];
 
-[PTBR+2]=[PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20+2];
-[MEMORY_FREE_LIST+[PTBR+2]]=[MEMORY_FREE_LIST+[PTBR+2]]+1;
-[PTBR+3]=[PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20+3];
-
-//copiying heap entries
-[PTBR+4]=[PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20+4];
-[MEMORY_FREE_LIST+[PTBR+4]]=[MEMORY_FREE_LIST+[PTBR+4]]+1;
-[PTBR+5]=[PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20+5];
-
-[PTBR+6]=[PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20+6];
-[MEMORY_FREE_LIST+[PTBR+6]]=[MEMORY_FREE_LIST+[PTBR+6]]+1;
-[PTBR+7]=[PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20+7];
-
-//copiying code entries
-[PTBR+8]=[PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20+8];
-[MEMORY_FREE_LIST+[PTBR+8]]=[MEMORY_FREE_LIST+[PTBR+8]]+1;
-[PTBR+9]=[PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20+9];
-
-[PTBR+10]=[PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20+10];
-[MEMORY_FREE_LIST+[PTBR+10]]=[MEMORY_FREE_LIST+[PTBR+10]]+1;
-[PTBR+11]=[PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20+11];
-
-[PTBR+12]=[PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20+12];
-[MEMORY_FREE_LIST+[PTBR+12]]=[MEMORY_FREE_LIST+[PTBR+12]]+1;
-[PTBR+13]=[PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20+13];
-
-[PTBR+14]=[PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20+14];
-[MEMORY_FREE_LIST+[PTBR+14]]=[MEMORY_FREE_LIST+[PTBR+14]]+1;
-[PTBR+15]=[PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20+15];
+i=0;
+while(i<=14) do
+	[new_PTBR+i]=[PTBR+i];
+	[MEMORY_FREE_LIST+[new_PTBR+i]]=[MEMORY_FREE_LIST+[new_PTBR+i]]+1;
+	[new_PTBR+i+1]=[PTBR+i+1];
+	i=i+2;
+endwhile;
 
 //Stack entries are already set earlier
 
 //Copiying user stack contents of parent to child
 alias parent_stack R8;
 alias child_stack R7;
+
 parent_stack =  [PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20+16];
 child_stack = [PAGE_TABLE_BASE+new_pid*20+16];
 i=0;
@@ -165,27 +146,28 @@ while(i<=511) do
 	[child_stack*512+i] = [parent_stack*512+i];
 	i=i+1;
 endwhile;
+
 //Cloning User stacks is completed
 
 //Storing BP on top of kernel stack of newly created process
 [[PROCESS_TABLE+16*new_pid+11]*512] = BP;
 
 //Setting up return values in user stacks of parent and child
-alias physicalAddrRetVal R6;
+
 //parent
-physicalAddrRetVal = ( [(PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20)+ 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
-[physicalAddrRetVal] = new_pid;
+[( [PTBR+ 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512)]= new_pid;
+//[physicalAddrRetVal] = new_pid;
 
 //child
-physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
-[physicalAddrRetVal] = 0;
+[([new_PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512)]=0;
+//[physicalAddrRetVal] = 0;
 
 //reset the mode flag of parent process to 0
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
 
-PTBR=PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1	]*20;
-
+//PTBR=PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20;
+//PTBR=old;
 //changing back to user stack
 SP = userSP;
-
+breakpoint;
 ireturn;

@@ -1,8 +1,15 @@
-alias pid R0;
-pid = [SYSTEM_STATUS_TABLE+1]; //Retriving PID of process which invoked INT_10
+//set mode flag of cureent process to 10(exit system call)
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 10;
 
+//switch to kernel stack
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
 
-[(PROCESS_TABLE + (pid * 16)) + 4]=TERMINATED; //Setting PID of Invoking process to TERMINATED
+backup;
+R1=3; //Function number of exit in process manager module(Module 1)
+R2=[SYSTEM_STATUS_TABLE + 1];
+call MOD_1;
+restore;
 
 alias check R1;
 check=1;

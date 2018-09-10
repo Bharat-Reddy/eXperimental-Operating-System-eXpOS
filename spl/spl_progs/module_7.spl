@@ -39,6 +39,10 @@ loadi(15,28);
 loadi(20,33);
 loadi(21,34);
 
+//INT 8
+loadi(18,31);
+loadi(19,32);
+
 //Module 0
 loadi(40,53);
 loadi(41,54);

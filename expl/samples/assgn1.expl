@@ -1,0 +1,17 @@
+int main()
+{
+decl
+    int temp,num,pid;
+enddecl
+begin
+    pid = exposcall("Fork");
+    if(pid==0) then
+        num=999;
+        temp = exposcall ( "Write" , -2, num );
+    else
+        num=111;
+        temp = exposcall ( "Write" , -2, pid );
+    endif;
+    return 0;
+end
+}

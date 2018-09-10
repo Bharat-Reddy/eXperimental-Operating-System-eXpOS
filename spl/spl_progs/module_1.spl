@@ -3,6 +3,31 @@
 alias functionNum R1; //retriving the function number
 alias currentPID R2; //PID of current process
 
+if(functionNum==1) then //get free pcb
+	alias index R3;
+	alias i R4;
+	i=0;
+	index=-1;
+	while(i<=15) do
+		if([PROCESS_TABLE + (i * 16) + 4]==TERMINATED) then
+			index=i;
+			break;
+		endif;
+		i=i+1;
+	endwhile;
+	if(index==-1) then
+		R0=-1;
+		return;
+	endif;
+
+	[PROCESS_TABLE + (index * 16) + 1]=index;
+	[PROCESS_TABLE + (index * 16) + 14]=PAGE_TABLE_BASE+index*20;
+	[PROCESS_TABLE + (index * 16) + 15]=10;
+	R0=index;
+	return;
+
+endif;
+
 if(functionNum==2) then //Free user area page
 	alias userAreaPageNo R3;
 	userAreaPageNo=[PROCESS_TABLE + currentPID*16 + 11];
