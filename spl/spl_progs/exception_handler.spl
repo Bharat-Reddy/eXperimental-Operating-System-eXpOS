@@ -6,52 +6,31 @@
 SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1; //Setting up kernel stack
 
 backup;
-if(EC==1) then
-	
-	print "Ilgl_Instr";
+if (EC != 0) then 	//if cause is anything other than page falut
 	backup;
-	R1=3; //Function number of exit in process manager module(Module 1)
-	R2=[SYSTEM_STATUS_TABLE + 1];
+	if (EC==1) then
+		print "ILLEG_INSTR";
+	else
+		if (EC==2) then
+			print "ILLEG_MEM_ACC";
+		else
+			if (EC==3) then
+				print "ARITH_EXCP";
+			endif;
+		endif;
+	endif;
+	//call exit process
+	R1 = 3;
+	R2 = [SYSTEM_STATUS_TABLE + 1];
 	call MOD_1;
-	restore;
-
-	//Invoking Scheduler
+	//call scheduler
 	call MOD_5;
-
-endif;
-
-if(EC==2) then
-	print "Ilgl_mem_acc";
-	backup;
-	R1=3; //Function number of exit in process manager module(Module 1)
-	R2=[SYSTEM_STATUS_TABLE + 1];
-	call MOD_1;
 	restore;
-
-	//Invoking Scheduler
-	call MOD_5;
-endif;
-
-
-if(EC==3) then
-	print "arithmeticExec";
-	backup;
-	R1=3; //Function number of exit in process manager module(Module 1)
-	R2=[SYSTEM_STATUS_TABLE + 1];
-	call MOD_1;
-	restore;
-
-	//Invoking Scheduler
-	call MOD_5;
 endif;
 
 if(EC==0) then
-	//alias exec_pgno R10;
-	//exec_pgno=EPN;
-
+	//if page fault is caused due to code page
 	if(EPN==4 || EPN==5 || EPN==6 || EPN==7) then //code page
-		//alias block_no R12;
-		//block_no=[DISK_MAP_TABLE + 10*[SYSTEM_STATUS_TABLE+1]];
 
 		backup;
 			R1=5;
@@ -75,9 +54,9 @@ if(EC==0) then
 
 endif;
 
-[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0; //Setting mode flag back to 0
-
 restore;
+
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0; //Setting mode flag back to 0
 
 //changing back to user stack
 SP=[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+13];

@@ -1,0 +1,145 @@
+
+////////FORK SYSTEM CALL//////////
+
+alias usersp R1;
+alias childpid R4;
+alias retadd R2;
+
+usersp = SP;
+
+//set mode flag to 8
+[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 9] = 8;
+
+//switch to kernel stack
+[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 13] = SP;
+SP = [PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 11]*512 - 1;
+
+//calculate return address
+retadd = (([PTBR + 2*(usersp - 1)/512])*512) + ((usersp-1)%512);
+
+//call get pcb entry function in process manager module
+multipush (R1);
+R1 = 1;
+call MOD_1;
+multipop(R1);
+
+childpid = R0;
+//if no free process is available
+if (childpid == -1) then
+	[retadd] = -1;
+	[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 9] = 0;
+	SP = [PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 13];
+	ireturn;
+endif;
+
+
+backup;
+//get first stack page and set page table entries
+R1 = 1;
+call MOD_2;
+[PAGE_TABLE_BASE + 20*childpid + 16] = R0;
+[PAGE_TABLE_BASE + 20*childpid + 17] = [PAGE_TABLE_BASE + 20*[SYSTEM_STATUS_TABLE + 1] + 17];
+//get second stack page and set page table entries
+R1 = 1;
+call MOD_2;
+[PAGE_TABLE_BASE + 20*childpid + 18] = R0;
+[PAGE_TABLE_BASE + 20*childpid + 19] = [PAGE_TABLE_BASE + 20*[SYSTEM_STATUS_TABLE + 1] + 17];
+//get user area page and set process table entry
+R1 = 1;
+call MOD_2;
+[PROCESS_TABLE + 16*childpid + 11] = R0;
+restore;
+
+
+//set process table entries
+//same as parent process
+[PROCESS_TABLE + 16*childpid + 3] = [PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 3];	//copy userid of parent
+[PROCESS_TABLE + 16*childpid + 6] = [PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 6];	//copy swap flag
+[PROCESS_TABLE + 16*childpid + 7] = [PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 7];	//copy inode index
+[PROCESS_TABLE + 16*childpid + 10] = [PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 10];//copy user swp status
+[PROCESS_TABLE + 16*childpid + 13] = [PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 13];//copy usersp
+
+//diff for parent process
+[PROCESS_TABLE + 16*childpid + 0] = 0;	//set tick field to zero
+[PROCESS_TABLE + 16*childpid + 9] = 0;	//mode flag to zero
+[PROCESS_TABLE + 16*childpid + 12] = 0;	//kptr value to zero
+
+[PROCESS_TABLE + 16*childpid + 1] = childpid;	//pid
+[PROCESS_TABLE + 16*childpid + 2] = [SYSTEM_STATUS_TABLE + 1];	//ppid
+[PROCESS_TABLE + 16*childpid + 4] = CREATED;	//state
+
+
+//Copying the per-process resource table of child in last 16 words of user area page
+alias count R5;
+alias child_uerspageno R6;
+alias parent_userpageno R7;
+child_uerspageno = [PROCESS_TABLE + 16*childpid + 11];
+parent_userpageno = [PROCESS_TABLE  + 16*[SYSTEM_STATUS_TABLE + 1] + 11];
+count=496;
+while(count<512) do
+	[child_uerspageno*512 + count] = [parent_userpageno*512 + count];
+	count = count + 1;
+endwhile;
+
+
+//copying the disk map table of parent in child
+count = 0;
+alias child_diskmap R6;
+alias parent_diskmap R7;
+child_diskmap = DISK_MAP_TABLE + 10*childpid;
+parent_diskmap = DISK_MAP_TABLE + 10*[SYSTEM_STATUS_TABLE + 1];
+while (count<10) do 
+	[child_diskmap + count] = [parent_diskmap + count];
+	count = count + 1;
+endwhile;
+
+//initializing the page table of child process
+
+//copying page table entries for library,heap and code pages
+count = 0;
+while (count < 16) do 
+	[PAGE_TABLE_BASE + 20*childpid + count] = [PAGE_TABLE_BASE + 20*[SYSTEM_STATUS_TABLE+ 1] + count];
+	[PAGE_TABLE_BASE + 20*childpid + count + 1] = [PAGE_TABLE_BASE + 20*[SYSTEM_STATUS_TABLE+ 1] + count + 1];
+	//increase share count of the corresponding page
+	alias pageno R6;
+	pageno = [PAGE_TABLE_BASE + 20*childpid + count];
+	[MEMORY_FREE_LIST + pageno] = [MEMORY_FREE_LIST + pageno] + 1;
+	count = count + 2;
+endwhile;
+
+//stack page table entries already set
+
+//copying content of stack pages
+alias child_usersp R6;
+alias parent_usersp R7;
+
+count = 0;
+child_usersp = [PAGE_TABLE_BASE + 20*childpid + 16];
+parent_usersp = [PAGE_TABLE_BASE + 20*[SYSTEM_STATUS_TABLE + 1] + 16];
+while (count < 512) do 
+	[child_usersp*512 + count] = [parent_usersp*512 + count];
+	count = count + 1;
+endwhile;
+
+count = 0;
+child_usersp = [PAGE_TABLE_BASE + 20*childpid + 18];
+parent_usersp = [PAGE_TABLE_BASE + 20*[SYSTEM_STATUS_TABLE + 1] + 18];
+while (count < 512) do 
+	[child_usersp*512 + count] = [parent_usersp*512 + count];
+	count = count + 1;
+endwhile;
+
+//store BP to top of kernel stack
+[[PROCESS_TABLE + 16*childpid + 11]*512] = BP;
+
+//find return addresses in child and parent proces
+[[PAGE_TABLE_BASE + 20*childpid + 2*(usersp-1)/512]*512 + (usersp-1)%512] = 0;
+[[PAGE_TABLE_BASE + 20*[SYSTEM_STATUS_TABLE + 1] + 2*(usersp-1)/512]*512 + (usersp-1)%512] = childpid;
+
+//reset mode flag
+[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 9] = 0;
+
+//switch to user stack
+SP = [PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 13];
+
+ireturn;

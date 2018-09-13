@@ -41,9 +41,9 @@ begin
 
           q = head;
 
-          length=100;
+          length=1;
 
-          while (length <= 200)  do
+          while (length <= 100)  do
 
               p = exposcall("Alloc",2);
 
@@ -72,8 +72,7 @@ begin
           pid = exposcall("Fork");
 
           if(pid == 0) then
-              check="zerooo";
-              temp = exposcall("Write",-2,check);
+              
               p = head;
 
               while(p != null)  do
@@ -95,9 +94,7 @@ begin
               endwhile;
 
           else
-              temp = exposcall("Write",-2,pid);
-              check="nooooooo";
-              temp = exposcall("Write",-2,check);
+            
               q = head.next;
 
               while(q != null)  do

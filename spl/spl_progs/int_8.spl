@@ -15,13 +15,13 @@ SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
 
 //Invoking get pcb function to get a new pid for child process
 alias new_pid R14;
-//multipush(R13);
+multipush(R13);
 R1=1;
 R2=[SYSTEM_STATUS_TABLE+1];
 call MOD_1;
 new_pid=R0;
 
-//multipop(R13);
+multipop(R13);
 
 if(new_pid==-1) then
 	alias physicalAddrRetVal R12;
@@ -169,5 +169,5 @@ endwhile;
 //PTBR=old;
 //changing back to user stack
 SP = userSP;
-breakpoint;
+
 ireturn;

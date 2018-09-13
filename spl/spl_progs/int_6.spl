@@ -1,3 +1,5 @@
+//Read System call
+
 //set mode flag of cureent process to 7(read system call)
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 7;
 
@@ -13,12 +15,11 @@ SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
 //accessing the file descriptor
 alias physicalPageNum R1;
 alias offset R2;
-alias fileDescPhysicalAddr R3;
-physicalPageNum = [PTBR + 2 * ((userSP - 4)/ 512)];
+physicalPageNum = [PTBR + 2 * (userSP - 4)/ 512];
 offset = (userSP - 4) % 512;
-fileDescPhysicalAddr = (physicalPageNum * 512) + offset;
+R3 = (physicalPageNum * 512) + offset;
 alias fileDescriptor R4;
-fileDescriptor=[fileDescPhysicalAddr];
+fileDescriptor=[R3];
 
 
 //checking whether file descriptor is valid or not

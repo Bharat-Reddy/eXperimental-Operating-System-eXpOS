@@ -18,10 +18,22 @@ process_table_entry = PROCESS_TABLE + currentPID * 16;
 //switching process
 
 alias tempPID R10;
-tempPID=currentPID+1;
-
 alias newPID R2;
-newPID=0;
+//newPID=0;
+//////////////////////////
+//Checking if all processes are terminated
+tempPID=1;
+while(tempPID<=15) do
+	if([ (PROCESS_TABLE + (tempPID * 16)) + 4 ] != TERMINATED) then
+		break;
+	endif;
+	tempPID=tempPID+1;
+endwhile;
+if(tempPID==16) then
+	halt;
+endif;
+
+/////////////////////////
 
 tempPID=1;
 /////////////////////////////

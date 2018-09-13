@@ -1,14 +1,14 @@
-//IDLE process
-loadi(69,11);
-loadi(70,12);
+//Module 5
+loadi(50,63);
+loadi(51,64);
 
 //Module 7
 loadi(54,67);
 loadi(55,68);
 
-//Module 5
-loadi(50,63);
-loadi(51,64);
+//IDLE process
+loadi(69,11);
+loadi(70,12);
 
 //--------------------------------------------------
 
@@ -20,10 +20,10 @@ PTBR=PAGE_TABLE_BASE; //for IDLE Process we use first 16 words since its PID=0
 PTLR=10;
 
 //Library
-[PTBR+0] = -1;
-[PTBR+1] = "0000";
-[PTBR+2] = -1;
-[PTBR+3] = "0000";
+[PTBR+0] = 63;
+[PTBR+1] = "0100";
+[PTBR+2] = 64;
+[PTBR+3] = "0100";
 
 //Heap
 [PTBR+4] = -1;
@@ -48,11 +48,10 @@ PTLR=10;
 [PTBR+19] = "0000";
 
 [PROCESS_TABLE+1]=0;
-[PROCESS_TABLE+11]=82;
 [PROCESS_TABLE+4]=RUNNING;
-
-[PROCESS_TABLE+13]=8*512;
+[PROCESS_TABLE+11]=82;
 [PROCESS_TABLE+12]=0;
+[PROCESS_TABLE+13]=8*512;
 [PROCESS_TABLE+14]=PAGE_TABLE_BASE;
 [PROCESS_TABLE+15]=10;
 
@@ -62,27 +61,4 @@ PTLR=10;
 [81 * 512] = [69*512 + 1];
 SP=8*512;
 
-// Settine state of other process table entries to TERMINATED
-
-multipush (R0);
-alias count R0;
-count = 2;
-
-while(count < 16) do
-	[PROCESS_TABLE + count*16 + 4] = TERMINATED;
-	count = count + 1;
-endwhile;
-multipop (R0);
-
 ireturn;
-
-
-
-
-
-
-
-
-
-
-
