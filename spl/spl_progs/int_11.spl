@@ -1,0 +1,121 @@
+///////////// WAIT, SIGNAL, GETPID and GETPPID System Calls //////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////
+
+alias userSP R0; 
+alias physicalPageNum R1;
+alias offset R2;
+alias Addr R3;
+alias sys_call_no R4;
+alias req_PID R5;
+alias physicalAddrRetVal R6;
+alias i R7;
+
+//Switching to kernel stack
+userSP=SP; //Saving value of user stack
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP; //Saving sp value in UPTR field
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1; //Setting up kernel stack
+
+//accessing the System call number from user stack(Since system call number is before arg 1 it is at (sp-5))
+
+physicalPageNum = [PTBR + 2 * ((userSP - 5)/ 512)];
+offset = (userSP - 5) % 512;
+Addr = (physicalPageNum * 512) + offset;
+
+sys_call_no=[Addr];
+
+if(sys_call_no==11) then //get pid system call
+
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 11; 
+
+	physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+	[physicalAddrRetVal] = [PROCESS_TABLE + 16 * [SYSTEM_STATUS_TABLE+1] + 1];
+
+	SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+	ireturn;
+
+endif;
+
+if(sys_call_no==12) then //get ppid system call
+
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 12; 
+
+	physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+	[physicalAddrRetVal] = [PROCESS_TABLE + 16 * [SYSTEM_STATUS_TABLE+1] + 2];
+
+	SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+	ireturn;
+
+endif;
+
+if(sys_call_no==13) then //wait system call
+
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 13; //Setting mode flag to system call no
+	
+	//PID is stored as argument 1(Extracting PID from user stack)
+	physicalPageNum = [PTBR + 2 * ((userSP - 4)/ 512)];
+	offset = (userSP - 4) % 512;
+	Addr = (physicalPageNum * 512) + offset;
+	req_PID=[Addr];
+
+
+	// FAILURE CASE
+	if(req_PID<0 || req_PID>=16 || req_PID==[SYSTEM_STATUS_TABLE+1] || [PROCESS_TABLE+req_PID*16+4]==TERMINATED) then
+		
+		//Setting return value as -1 (Failure)
+		
+		physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+		[physicalAddrRetVal] = -1;
+
+		//reset mode flag (0 indicates process is in user mode).
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+		
+		//changing back to user stack
+		SP = userSP;
+
+		ireturn;
+	endif;
+
+	[PROCESS_TABLE + 16 * [SYSTEM_STATUS_TABLE + 1] + 4] = WAIT_PROCESS;
+	[PROCESS_TABLE + 16 * [SYSTEM_STATUS_TABLE + 1] + 5] = req_PID;
+
+	backup;
+		call MOD_5;
+	restore;
+
+	//restoring mode flag
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+	//Setting return value to 0
+	physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+	[physicalAddrRetVal] = 0;
+
+	SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+	ireturn;
+
+endif;
+
+if(sys_call_no==14) then //Signal system call
+
+	//Setting mode flag to system call number
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 14;
+
+	i=0;
+	while(i<=15) do
+		if ([PROCESS_TABLE + i*16 + 4]==WAIT_PROCESS && 
+			[PROCESS_TABLE + i*16 + 5]==[SYSTEM_STATUS_TABLE+1]) then
+				[PROCESS_TABLE + i*16 + 4]=READY;
+		endif;
+		i=i+1;
+	endwhile;
+
+	//restoring mode flag
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+	//Setting return value to 0
+	physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+	[physicalAddrRetVal] = 0;
+
+	SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+	ireturn;
+
+endif;
