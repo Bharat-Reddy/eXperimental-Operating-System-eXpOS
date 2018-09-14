@@ -1,4 +1,4 @@
-load --init /home/bharat/myexpos/expl/samples/random.xsm
+load --init /home/bharat/myexpos/expl/samples/assgn1.xsm
 load --int=10 /home/bharat/myexpos/spl/spl_progs/int_10.xsm
 load --exhandler /home/bharat/myexpos/spl/spl_progs/exception_handler.xsm
 load --os /home/bharat/myexpos/spl/spl_progs/os_startup.xsm
@@ -18,6 +18,8 @@ load --module 4 /home/bharat/myexpos/spl/spl_progs/module_4.xsm
 load --module 1 /home/bharat/myexpos/spl/spl_progs/module_1.xsm
 load --module 2 /home/bharat/myexpos/spl/spl_progs/module_2.xsm
 load --exec /home/bharat/myexpos/expl/samples/even.xsm
+load --exec /home/bharat/myexpos/expl/samples/odd.xsm
 load --exec /home/bharat/myexpos/expl/samples/gcd.xsm
 load --exec /home/bharat/myexpos/expl/samples/sort.xsm
 load --exec /home/bharat/myexpos/expl/samples/linked.xsm
+load --exec /home/bharat/myexpos/expl/samples/child.xsm

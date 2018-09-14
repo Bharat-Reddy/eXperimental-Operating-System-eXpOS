@@ -64,15 +64,7 @@ SP=8*512;
 
 // Settine state of other process table entries to TERMINATED
 
-multipush (R0);
-alias count R0;
-count = 2;
 
-while(count < 16) do
-	[PROCESS_TABLE + count*16 + 4] = TERMINATED;
-	count = count + 1;
-endwhile;
-multipop (R0);
 
 ireturn;
 

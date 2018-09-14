@@ -1,0 +1,22 @@
+int main()
+{
+decl
+	int num,temp,count,i;
+enddecl
+
+begin
+	temp = exposcall("Read",-1,num);
+
+	count=0;
+	while(count<10) do 
+		temp = exposcall("Write",-2,num);
+		num=num+1;
+		count=count+1;
+		i=0;
+		while(i<500) do 
+			i=i+1;
+		endwhile;
+	endwhile;
+	return 0;
+end
+}

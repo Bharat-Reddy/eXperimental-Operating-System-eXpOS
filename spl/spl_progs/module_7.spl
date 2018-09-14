@@ -158,4 +158,16 @@ disk_map= DISK_MAP_TABLE + 10*1;
 [PROCESS_TABLE+16+15]=10;
 
 [76*512]=[65*512+1];
+
+//all other processes initially terminated
+multipush (R0);
+alias count R0;
+count = 2;
+
+while(count < 16) do
+	[PROCESS_TABLE + count*16 + 4] = TERMINATED;
+	count = count + 1;
+endwhile;
+multipop (R0);
+
 return;
