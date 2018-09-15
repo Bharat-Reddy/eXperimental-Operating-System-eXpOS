@@ -47,6 +47,14 @@ loadi(19,32);
 loadi(24,37);
 loadi(25,38);
 
+//INT 13
+loadi(28,41);
+loadi(29,42);
+
+//INT 14
+loadi(30,43);
+loadi(31,44);
+
 //INT 15
 loadi(32,45);
 loadi(33,46);
@@ -86,6 +94,16 @@ while(i<=127) do
 	[MEMORY_FREE_LIST+i]=0;
 	i=i+1;
 endwhile;
+
+//Initialising Semaphore table
+
+i=0;
+while(i<32) do
+	[SEMAPHORE_TABLE+i*4+0]=-1;
+	[SEMAPHORE_TABLE+i*4+1]=0;
+	i=i+1;
+endwhile;
+
 
 //Initialising WAIT_MEM_COUNT to 0
 [SYSTEM_STATUS_TABLE+3]=0;

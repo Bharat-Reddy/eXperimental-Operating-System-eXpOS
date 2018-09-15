@@ -1,4 +1,4 @@
-//FORK
+/////////////////// FORK SYSTEM CALL /////////////////////
 
 //set mode flag of cureent process to 8(read system call)
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 8;
@@ -94,11 +94,20 @@ restore;
 //State of child process is set to created
 [PROCESS_TABLE + 16*new_pid + 4]=CREATED;
 
-//copiying pre process resource table from parent to child
+//copiying per process resource table from parent to child
 alias ind R9;
 ind=496;
+alias semaphore_table_index R6;
 while(ind<=511) do
 	[ [PROCESS_TABLE+16*new_pid+11]*512 + ind]=[[PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+11]*512 + ind];
+	
+	if(ind%2==0 && [[PROCESS_TABLE+16*new_pid+11]*512 + ind]==1) then
+
+		semaphore_table_index = [[PROCESS_TABLE+16*new_pid+11]*512 + ind + 1];
+		[SEMAPHORE_TABLE+semaphore_table_index*4+1]=[SEMAPHORE_TABLE+semaphore_table_index*4+1]+1;
+
+	endif;
+	
 	ind=ind+1;
 endwhile;
 

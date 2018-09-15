@@ -21,6 +21,65 @@ if(functionNum==3) then //Func number 3 == Acquire Disk
 
 endif;
 
+if(functionNum==6) then //Func number 6 == Acquire Semaphore
+	alias free_index R14;
+	alias i R13;
+	free_index=-1;
+	i=0;
+	while(i<32) do
+		if([SEMAPHORE_TABLE+i*4+1]==0) then
+			free_index=i;
+			break;
+			i=i+1;
+		endif;
+	endwhile;
+
+	if(free_index==-1) then
+		R0=-1;
+		return;
+	endif;
+
+	[SEMAPHORE_TABLE+free_index*4+0]=-1; //Setting Locking PID field to -1
+	[SEMAPHORE_TABLE+free_index*4+1]=1;  //Setting PROCESS_COUNT field to 1
+
+	R0 = free_index;
+	return;
+
+endif;
+
+if(functionNum==7) then //Func number 7 == Release Semaphore
+	
+	alias semaphore_table_index R10;
+	semaphore_table_index = R3;
+	if(semaphore_table_index<0 || semaphore_table_index>=32) then
+		R0=-1;
+		return;
+	endif;
+
+	if([SEMAPHORE_TABLE+4*semaphore_table_index+0]==[SYSTEM_STATUS_TABLE+1]) then
+		
+		[SEMAPHORE_TABLE+4*semaphore_table_index+0]=-1;
+		alias i R9;
+		i=0;
+		while(i<=15) do
+
+			if([PROCESS_TABLE+16*i+4]==WAIT_SEMAPHORE && 
+				[PROCESS_TABLE+16*i+5]==semaphore_table_index) then
+
+				[PROCESS_TABLE+16*i+4]=READY;
+
+			endif;
+			i=i+1;
+		endwhile;
+
+	endif;
+
+	[SEMAPHORE_TABLE+4*semaphore_table_index+1]=[SEMAPHORE_TABLE+4*semaphore_table_index+1]-1;
+	R0=0;
+	return;
+
+endif;
+
 if(functionNum==8) then //Func number 8 == Acquire terminal
 	
 	while( ([TERMINAL_STATUS_TABLE] ) == 1) do
@@ -62,7 +121,4 @@ if(functionNum==9) then //func number 9 == Release terminal
 		return;
 
 	endif;
-	else
-		return;
-
 endif;
