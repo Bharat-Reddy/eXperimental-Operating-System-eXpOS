@@ -20,7 +20,7 @@ begin
 
               temp = exposcall("Read",-1, input);
 
-              if(input != "Shutdown") then
+              if(input != "S") then
 
                   pid = exposcall("Fork");
 

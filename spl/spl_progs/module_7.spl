@@ -1,3 +1,5 @@
+//BOOT MODULE
+
 //timer interrupt
 loadi(4,17);
 loadi(5,18);
@@ -18,6 +20,13 @@ loadi(64,14);
 //init programme
 loadi(65,7);
 loadi(66,8);
+
+//ROOT FILE
+loadi(62,5);
+
+//INT 4
+loadi(10,23);
+loadi(11,24);
 
 //INT 10
 loadi(22,35);
@@ -117,6 +126,23 @@ endwhile;
 //Disk terminal status to 0
 [DISK_STATUS_TABLE] = 0;
 
+//Initializing file status table
+i=0;
+while(i<60) do
+	[FILE_STATUS_TABLE+i*4+0]=-1;
+	[FILE_STATUS_TABLE+i*4+1]=-1;
+	i=i+1;
+endwhile;
+
+//Initializing buffer table
+i=0;
+while(i<4) do
+	[BUFFER_TABLE+i*4+0]=-1;
+	[BUFFER_TABLE+i*4+1]=0;
+	[BUFFER_TABLE+i*4+2]=-1;
+	i=i+1;
+endwhile;
+
 //---------------------------------------INIT PROCESS -------------------------//
 PTBR=PAGE_TABLE_BASE+20;
 PTLR=10;
@@ -182,6 +208,7 @@ disk_map= DISK_MAP_TABLE + 10*1;
 [PROCESS_TABLE+16+12]=0;
 [PROCESS_TABLE+16+14]=PAGE_TABLE_BASE+20;
 [PROCESS_TABLE+16+15]=10;
+[PROCESS_TABLE+16+3]=1; //setting userid to root
 
 [76*512]=[65*512+1];
 

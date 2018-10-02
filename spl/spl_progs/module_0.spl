@@ -21,6 +21,60 @@ if(functionNum==3) then //Func number 3 == Acquire Disk
 
 endif;
 
+if(functionNum==4) then //Acquire inode
+	
+	alias index R3;
+	while([FILE_STATUS_TABLE+4*index+0]!=-1) do
+		[PROCESS_TABLE+16*currentPID+4]=WAIT_FILE;
+		[PROCESS_TABLE+16*currentPID+5]=index;
+		backup;
+		call MOD_5;
+		restore;
+	endwhile;
+
+	//Checking if file is deleted
+	if([INODE_TABLE+16*index+1]==-1) then
+		R0=-1;
+		return;
+	endif;
+
+	//Locking the inode
+	[FILE_STATUS_TABLE+4*index+0]=currentPID;
+
+	R0=0;
+	return;
+
+endif;
+
+if(functionNum==5) then //Release inode
+	
+	alias index R3;
+	if(currentPID != [FILE_STATUS_TABLE+4*index+0]) then
+		R0=-1;
+		return;
+	endif;
+
+	//Setting lock field to -1
+	[FILE_STATUS_TABLE+4*index+0]=-1;
+
+	alias i R4;
+	i=0;
+	while(i<=15) do
+		if([PROCESS_TABLE+16*i+4]==WAIT_FILE &&
+			[PROCESS_TABLE+16*i+5]==index) then
+
+			[PROCESS_TABLE+16*i+4]=READY;
+		endif;
+		i=i+1;
+	endwhile;
+
+	R0=0;
+	return;
+
+endif;
+
+
+
 if(functionNum==6) then //Func number 6 == Acquire Semaphore
 	alias free_index R14;
 	alias i R13;

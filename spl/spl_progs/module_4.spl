@@ -3,6 +3,30 @@
 alias functionNum R1;
 alias currentPID R2;
 
+if(functionNum==1) then //Disk Store function
+	alias page_no R3;
+	alias block_no R4;
+	backup;
+		R1=3;
+		R2=currentPID;
+		call MOD_0;
+	restore;
+
+	[DISK_STATUS_TABLE+1]=1; //Setting load/store bit to store(1)
+	[DISK_STATUS_TABLE+2]=page_no;
+	[DISK_STATUS_TABLE+3]=block_no;
+
+	store(page_no,block_no);
+	[PROCESS_TABLE + (currentPID*16) + 4] = WAIT_DISK;
+
+	backup;
+	call MOD_5;
+	restore;
+
+	return;
+
+endif;
+
 if(functionNum==2) then //Disk load function
 
 	alias page_no R3;

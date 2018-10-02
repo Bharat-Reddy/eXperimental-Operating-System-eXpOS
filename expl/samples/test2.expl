@@ -1,0 +1,88 @@
+type
+Share
+{
+  int isempty;
+  int data;
+}
+endtype
+
+decl
+  Share head;
+enddecl
+
+int main()
+{
+decl
+    int temp, x, ppid, pid, temppid, semid, iter,i;
+enddecl
+
+begin
+  temp = exposcall("Heapset");
+  semid = exposcall("Semget");
+
+  head = exposcall("Alloc",2);
+
+temp = exposcall("Write",-2,"yo2");
+
+  head.isempty = 1;
+
+
+temp = exposcall("Write",-2,"yo2");
+
+
+  ppid = exposcall("Getpid");
+
+
+  pid = exposcall("Fork");
+  pid = exposcall("Fork");
+  pid = exposcall("Fork");
+
+  pid = exposcall("Getpid");
+
+
+
+  if (pid == ppid) then
+    iter = 1;
+
+    while(iter <= 70) do
+      temp = exposcall("SemLock", semid);
+      temp = head.isempty;
+
+      if(temp == 0) then
+        x = head.data;
+        head.isempty = 1;
+        temp = exposcall("Write",-2, x);
+        iter = iter+1;
+      endif;
+
+      temp = exposcall("SemUnLock", semid);
+    endwhile;
+
+  else 
+    iter = 1;
+    while (iter<=10) do
+      temppid = exposcall("Getpid");
+
+      temp = exposcall("SemLock", semid);
+      temp = head.isempty;
+
+      if (temp == 1) then
+        head.data = temppid*100 + iter;
+        head.isempty = 0;
+        iter = iter + 1;
+      endif;
+
+      temp = exposcall("SemUnLock", semid);
+
+      i=temppid*10 + 100;
+      while (i>0) do 
+        i = i-1;
+      endwhile;
+
+    endwhile;
+  endif;
+
+  temp = exposcall("Semrelease", semid);
+  return 0;
+end
+}

@@ -74,7 +74,7 @@ MOV R1,BP
 MOV R0,4
 ADD R1,R0
 MOV R0,[R1]
-MOV R1,"Shutdown"
+MOV R1,"S"
 NE R0,R1
 JZ R0,2444
 MOV R0,"Fork"

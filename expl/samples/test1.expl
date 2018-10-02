@@ -1,0 +1,13 @@
+int main()
+{
+decl
+    int a,b,c,sum;
+enddecl
+begin
+    a=0;
+    b=1;
+    breakpoint;
+    sum=b/a;
+    return 0;
+end
+}

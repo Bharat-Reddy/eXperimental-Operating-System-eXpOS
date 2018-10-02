@@ -1,0 +1,52 @@
+type
+node
+{
+	int value;
+}
+endtype
+
+decl
+	node bal;
+enddecl
+
+int main()
+{
+decl
+	int pid,temp,semid,i,temp2;
+enddecl
+
+begin
+	temp = exposcall("Heapset");
+	semid = exposcall("Semget");
+	bal=exposcall("Alloc",1);
+	bal.value=5000;
+	pid = exposcall("Fork");
+	i=0;
+	if(pid==0) then
+		temp=exposcall("SemLock",semid);
+		temp2 = bal.value;
+		temp2 = temp2 - 4000;
+		bal.value = temp2;
+		temp = exposcall("Write",-2,"Child");
+		temp = exposcall("Write",-2,bal.value);
+		temp=exposcall("SemUnLock",semid);
+	else
+		temp=exposcall("SemLock",semid);
+		temp2 = bal.value;
+	while(i<100) do 
+			i = i+1;
+		endwhile;
+		temp2 = temp2 + 2000;	
+		bal.value = temp2;
+		temp = exposcall("Write",-2,"Parent");
+		temp = exposcall("Write",-2,bal.value);
+		temp=exposcall("SemUnLock",semid);
+	endif;
+
+	temp = exposcall("Write",-2,"after");
+	temp=exposcall("Write",-2,bal.value);
+
+	return 0;
+
+end
+}
