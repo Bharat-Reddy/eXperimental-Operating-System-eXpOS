@@ -1,3 +1,5 @@
+//////////////////////////////////// READ SYSTEM CALL //////////////////////////////////
+
 //set mode flag of cureent process to 7(read system call)
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 7;
 
@@ -20,14 +22,155 @@ fileDescPhysicalAddr = (physicalPageNum * 512) + offset;
 alias fileDescriptor R4;
 fileDescriptor=[fileDescPhysicalAddr];
 
+alias physicalAddrRetVal R5;
+physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
 
 //checking whether file descriptor is valid or not
 if(fileDescriptor!=-1) then
 	
-	alias physicalAddrRetVal R5;
-	physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+	if(fileDescriptor<0 || fileDescriptor>7) then
+		[physicalAddrRetVal]=-1;
+		//changing back to user stack
+		SP = userSP;
+
+		//reset mode flag (0 indicates process is in user mode).
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+		ireturn;
+	endif;
+
+	alias user_area_page R6;
+	user_area_page = [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+11];
+
+	if([user_area_page*512 + 496 + fileDescriptor*2]==-1 ||
+		[user_area_page*512 + 496 + fileDescriptor*2]!=FILE) then
+
+		[physicalAddrRetVal]=-1;
+		//changing back to user stack
+		SP = userSP;
+
+		//reset mode flag (0 indicates process is in user mode).
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+		ireturn;
+	endif;
+
+	alias open_file_index R7;
+	open_file_index = [user_area_page*512 + 496 + fileDescriptor*2 +1];
+
+	alias inode_index R8;
+	inode_index = [OPEN_FILE_TABLE + 4*open_file_index + 0];
+
+	backup;
+		R1=4;
+		R2=[SYSTEM_STATUS_TABLE+1];
+		R3=inode_index;
+		call MOD_0;
+
+		if(R0==-1) then
+			restore;
+			[physicalAddrRetVal]=-1;
+			//changing back to user stack
+			SP = userSP;
+
+			//reset mode flag (0 indicates process is in user mode).
+			[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+			ireturn;
+		endif;
+	restore;
+
+	alias lseek R9;
+	lseek = [OPEN_FILE_TABLE + 4*open_file_index + 2];
+
+	alias word R10;
+	word = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + ((userSP - 3) % 512)];
+
+	//alias pg_no R11;
+	//alias off R12;
+	alias addr R11;
+
+	//pg_no = [PTBR + 2 * ((word)/ 512)];
+	//off = (word) % 512;
+	addr = (([PTBR + 2 * ((word)/ 512)]) * 512) + ((word) % 512);
+
+	if(inode_index==INODE_ROOT) then
+		if(lseek==480) then
+			//Releasing Inode
+			backup;
+				R1=5;
+				R2=[SYSTEM_STATUS_TABLE + 1];
+				R3=inode_index;
+				call MOD_0;
+			restore;
+			[physicalAddrRetVal]=-2;
+			//changing back to user stack
+			SP = userSP;
+
+			//reset mode flag (0 indicates process is in user mode).
+			[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+			ireturn;
+		endif;
+
+		[addr] = [ROOT_FILE + lseek];
+		[OPEN_FILE_TABLE + 4*open_file_index + 2] = [OPEN_FILE_TABLE + 4*open_file_index + 2]+1;
+
+	else
+		//print "bharat2";
+		alias file_size R12;
+		file_size = [INODE_TABLE + 16*inode_index + 2];
+		if(lseek==file_size) then
+			//Releasing Inode
+			backup;
+				R1=5;
+				R2=[SYSTEM_STATUS_TABLE + 1];
+				R3=inode_index;
+				call MOD_0;
+			restore;
+			[physicalAddrRetVal]=-2;
+			//changing back to user stack
+			SP = userSP;
+
+			//reset mode flag (0 indicates process is in user mode).
+			[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+			ireturn;
+		endif;
+		//print "bharat3";
+		//alas block_index R13;
+		//block_index = lseek/512;
+		alias block_no R13;
+		block_no = [INODE_TABLE+16*inode_index+8+(lseek/512)];
+
+		alias new_offset R14;
+		new_offset = lseek%512;
+
+		//Calling buffered read function
+		//print "bharat1";
+		backup;
+			R1=2;
+			R2=block_no;
+			R3=new_offset;
+			R4=addr;
+			call MOD_3;
+		restore;
+		//print "bharat4";
+		//Incrementing lseek value
+		[OPEN_FILE_TABLE + 4*open_file_index + 2] = [OPEN_FILE_TABLE + 4*open_file_index + 2]+1;		
+
+		//Releasing Inode
+		backup;
+			R1=5;
+			R2=[SYSTEM_STATUS_TABLE + 1];
+			R3=inode_index;
+			call MOD_0;
+		restore;
+			[physicalAddrRetVal]=0;
+			//changing back to user stack
+			SP = userSP;
+
+			//reset mode flag (0 indicates process is in user mode).
+			[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+			ireturn;
+
+	endif;
 	
-	[physicalAddrRetVal] = -1;
 else
 	//if valid get the word from stack and call device manager module(module 4)
 	alias word R5;

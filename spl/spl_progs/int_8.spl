@@ -64,23 +64,26 @@ call MOD_2;
 restore;
 ////////////////Setting up Process Table entries of new process/////////////////
 
+alias ind R9;
+ind = PROCESS_TABLE + 16*new_pid;
+
 //Copiying "user id" field of process table from parent process table to child process table
-[PROCESS_TABLE + 16*new_pid + 3]=[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 3];
+[ind + 3]=[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 3];
 
 //Copiying "swap flag" field of process table from parent process table to child process table
-[PROCESS_TABLE + 16*new_pid + 6]=[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 6];
+[ind + 6]=[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 6];
 
 //Copiying "user area swap status" field of process table from parent process table to child process table
-[PROCESS_TABLE + 16*new_pid + 10]=[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 10];
+[ind + 10]=[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 10];
 
 //Copiying "inode index" field of process table from parent process table to child process table
-[PROCESS_TABLE + 16*new_pid + 7]=[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 7];
+[ind + 7]=[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 7];
 
 //Copiying "UPTR" field of process table from parent process table to child process table
-[PROCESS_TABLE + 16*new_pid + 13]=[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 13];
+[ind + 13]=[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE + 1] + 13];
 
 //Setting "mode flag" of child process in process table to zero
-[PROCESS_TABLE + 16*new_pid + 9]=0;
+[ind + 9]=0;
 
 //Setting "KPTR" of child process in process table to zero
 [PROCESS_TABLE + 16*new_pid + 12]=0;
@@ -95,9 +98,10 @@ restore;
 [PROCESS_TABLE + 16*new_pid + 4]=CREATED;
 
 //copiying per process resource table from parent to child
-alias ind R9;
+
 ind=496;
 alias semaphore_table_index R6;
+alias open_file_index R5;
 while(ind<=511) do
 	[ [PROCESS_TABLE+16*new_pid+11]*512 + ind]=[[PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+11]*512 + ind];
 	
@@ -107,11 +111,19 @@ while(ind<=511) do
 		[SEMAPHORE_TABLE+semaphore_table_index*4+1]=[SEMAPHORE_TABLE+semaphore_table_index*4+1]+1;
 
 	endif;
+
+	if(ind%2==0 && [[PROCESS_TABLE+16*new_pid+11]*512 + ind]==FILE) then
+
+
+		open_file_index = [[PROCESS_TABLE+16*new_pid+11]*512 + ind+1];
+		//[SEMAPHORE_TABLE+semaphore_table_index*4+1]=[SEMAPHORE_TABLE+semaphore_table_index*4+1]+1;
+		[OPEN_FILE_TABLE+4*open_file_index+1] = [OPEN_FILE_TABLE+4*open_file_index+1]+1;
+	endif;
 	
 	ind=ind+1;
 endwhile;
 
-//copiying pre process disk map table from parent to child
+//copiying per process disk map table from parent to child
 alias disk_map_old R11;
 disk_map_old= DISK_MAP_TABLE + 10*[SYSTEM_STATUS_TABLE + 1];
 alias disk_map R12;

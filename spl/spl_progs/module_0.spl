@@ -4,6 +4,44 @@ alias functionNum R1; //retriving the function number
 alias currentPID R2; //PID of current process
 
 
+if(functionNum==1) then
+	alias buffer_no R3;
+	while([BUFFER_TABLE+4*buffer_no+2]!=-1) do
+		[PROCESS_TABLE+16*currentPID+4]=WAIT_BUFFER;
+		[PROCESS_TABLE+16*currentPID+5]=buffer_no;
+		backup;
+		call MOD_5;
+		restore;
+	endwhile;
+	[BUFFER_TABLE+4*buffer_no+2]=currentPID;
+	return;
+endif;
+
+if(functionNum==2) then
+	alias buffer_no R3;
+	if(currentPID != [BUFFER_TABLE+4*buffer_no+2]) then
+		R0=-1;
+		return;
+	endif;
+
+	[BUFFER_TABLE+4*buffer_no+2]=-1;
+
+	alias i R4;
+	i=0;
+	while(i<=15) do
+		if([PROCESS_TABLE+16*i+4]==WAIT_BUFFER &&
+			[PROCESS_TABLE+16*i+5]==buffer_no) then
+
+			[PROCESS_TABLE+16*i+4]=READY;
+		endif;
+		i=i+1;
+	endwhile;
+
+	R0=0;
+	return;
+
+endif;
+
 if(functionNum==3) then //Func number 3 == Acquire Disk
 
 	while( ([DISK_STATUS_TABLE] ) == 1) do

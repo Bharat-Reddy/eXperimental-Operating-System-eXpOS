@@ -1,0 +1,23 @@
+int main() 
+{
+decl
+	int temp,i,filedesc;
+	str filename,buff;
+enddecl
+
+begin
+
+	filedesc = exposcall("Open","mdata.dat");
+
+	i = 0;
+	while(1 == 1) do 
+	i = exposcall("Read",filedesc,buff);
+	if (i==-2) then
+		break;
+	endif;
+	temp = exposcall("Write",-2,buff);
+	endwhile;
+
+	return 0;
+end
+}

@@ -44,6 +44,15 @@ if(functionNum==2) then //Free user area page
 
 			restore;
 		endif;
+
+		if([userAreaPageNo*512+i]==FILE) then
+			backup;
+				R1=4;
+				R2=[userAreaPageNo*512+i+1];
+				call MOD_3;
+			restore;
+		endif;
+
 		i=i+2;
 	endwhile;
 
