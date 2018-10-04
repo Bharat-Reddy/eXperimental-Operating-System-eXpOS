@@ -82,7 +82,7 @@
     int result;
     FILE * fp;
     extern FILE *yyin;
-    extern int yylineno;
+    extern int yylineno, lineno;
     struct Fieldlist *ftemp;
     struct Typetable *declarationType ,*FdeclarationType,*functype,*temp1,*temp2;
     struct Gsymbol *Gtemp;
@@ -2883,7 +2883,7 @@ yyreturn:
 
 void yyerror(char const *s) 
 { 
-    printf("yyerror  %s\n",s); 
+    printf("%d: %s\n",lineno,s); 
     return ;
 } 
 

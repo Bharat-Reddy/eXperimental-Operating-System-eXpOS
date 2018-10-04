@@ -6,6 +6,7 @@
 SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1; //Setting up kernel stack
 
 backup;
+multipush(EIP);
 if(EC==1) then
 	
 	print "Ilgl_Instr";
@@ -76,10 +77,12 @@ if(EC==0) then
 endif;
 
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0; //Setting mode flag back to 0
-
+multipop(EIP);
 restore;
 
 //changing back to user stack
 SP=[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+13];
+SP=SP+1;
+[[PTBR+2*(SP/512)]*512+(SP%512)]=EIP;
 //breakpoint;
 ireturn;

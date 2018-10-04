@@ -48,9 +48,9 @@ if(functionNum==2) then
 	endif;
 
 	[word] = [(71+buffer_no)*512+offset];
-	print "-----";
-	print [(71+buffer_no)*512+offset];
-	print "----";
+	//print "-----";
+	//print [(71+buffer_no)*512+offset];
+	//print "----";
 
 	backup;
 		R1=2;

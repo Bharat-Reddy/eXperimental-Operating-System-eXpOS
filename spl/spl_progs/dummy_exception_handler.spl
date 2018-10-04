@@ -1,0 +1,90 @@
+//Exception Handler
+breakpoint;
+
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = -1; //Setting mode flag to -1
+
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP; //Saving sp value in UPTR field
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1; //Setting up kernel stack
+
+print "Hello";
+backup;
+multipush(EIP);
+if(EC==1) then
+	
+	print "Ilgl_Instr";
+	backup;
+	R1=3; //Function number of exit in process manager module(Module 1)
+	R2=[SYSTEM_STATUS_TABLE + 1];
+	call MOD_1;
+	restore;
+
+	//Invoking Scheduler
+	call MOD_5;
+
+endif;
+
+if(EC==2) then
+	print "Ilgl_mem_acc";
+	backup;
+	R1=3; //Function number of exit in process manager module(Module 1)
+	R2=[SYSTEM_STATUS_TABLE + 1];
+	call MOD_1;
+	restore;
+
+	//Invoking Scheduler
+	call MOD_5;
+endif;
+
+
+if(EC==3) then
+	print "arithmeticExec";
+	backup;
+	R1=3; //Function number of exit in process manager module(Module 1)
+	R2=[SYSTEM_STATUS_TABLE + 1];
+	call MOD_1;
+	restore;
+
+	//Invoking Scheduler
+	call MOD_5;
+endif;
+
+if(EC==0) then
+	//alias exec_pgno R10;
+	//exec_pgno=EPN;
+
+	if(EPN==4 || EPN==5 || EPN==6 || EPN==7) then //code page
+		//alias block_no R12;
+		//block_no=[DISK_MAP_TABLE + 10*[SYSTEM_STATUS_TABLE+1]];
+
+		backup;
+			R1=5;
+			R2=[SYSTEM_STATUS_TABLE+1];
+			R3=[DISK_MAP_TABLE + 10*[SYSTEM_STATUS_TABLE+1]+EPN]; //block number
+			call MOD_2;
+			
+			[PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20 + 2*EPN]=R0;
+			[PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20 + 2*EPN + 1]="1100";
+		restore;
+	endif;
+
+	if(EPN==2 || EPN==3) then //heap page missing
+		backup;
+		R1=1;
+		call MOD_2; //calling get new page
+		[PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20 + 2*EPN]=R0;
+		[PAGE_TABLE_BASE+[SYSTEM_STATUS_TABLE+1]*20 + 2*EPN + 1]="1110";
+		restore;
+	endif;
+
+endif;
+
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0; //Setting mode flag back to 0
+multipop(EIP);
+restore;
+
+//changing back to user stack
+SP=[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+13];
+SP=SP+1;
+[[PTBR+2*(SP/512)]*512+(SP%512)]=EIP;
+//breakpoint;
+ireturn;
