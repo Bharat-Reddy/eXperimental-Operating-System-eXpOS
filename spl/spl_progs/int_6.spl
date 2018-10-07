@@ -29,6 +29,7 @@ physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) %
 if(fileDescriptor!=-1) then
 	
 	if(fileDescriptor<0 || fileDescriptor>7) then
+	//print "NotValid";
 		[physicalAddrRetVal]=-1;
 		//changing back to user stack
 		SP = userSP;
@@ -40,10 +41,10 @@ if(fileDescriptor!=-1) then
 
 	alias user_area_page R6;
 	user_area_page = [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+11];
-
+//print "Hello1";
 	if([user_area_page*512 + 496 + fileDescriptor*2]==-1 ||
 		[user_area_page*512 + 496 + fileDescriptor*2]!=FILE) then
-
+//print "Ahem!";
 		[physicalAddrRetVal]=-1;
 		//changing back to user stack
 		SP = userSP;
@@ -52,7 +53,7 @@ if(fileDescriptor!=-1) then
 		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
 		ireturn;
 	endif;
-
+//print "Hello2";
 	alias open_file_index R7;
 	open_file_index = [user_area_page*512 + 496 + fileDescriptor*2 +1];
 
@@ -64,8 +65,9 @@ if(fileDescriptor!=-1) then
 		R2=[SYSTEM_STATUS_TABLE+1];
 		R3=inode_index;
 		call MOD_0;
-
+//print "Hello3";
 		if(R0==-1) then
+		//print "qwwqwqw";
 			restore;
 			[physicalAddrRetVal]=-1;
 			//changing back to user stack
@@ -76,7 +78,7 @@ if(fileDescriptor!=-1) then
 			ireturn;
 		endif;
 	restore;
-
+//print "Hello4";
 	alias lseek R9;
 	lseek = [OPEN_FILE_TABLE + 4*open_file_index + 2];
 
@@ -113,6 +115,7 @@ if(fileDescriptor!=-1) then
 		[OPEN_FILE_TABLE + 4*open_file_index + 2] = [OPEN_FILE_TABLE + 4*open_file_index + 2]+1;
 
 	else
+		//print "Hello5";
 		//print "bharat2";
 		alias file_size R12;
 		file_size = [INODE_TABLE + 16*inode_index + 2];
@@ -140,9 +143,12 @@ if(fileDescriptor!=-1) then
 
 		alias new_offset R14;
 		new_offset = lseek%512;
-
+//print "Hello6";
 		//Calling buffered read function
 		//print "bharat1";
+		//print "-----";
+		
+		//print "------";
 		backup;
 			R1=2;
 			R2=block_no;
@@ -150,6 +156,7 @@ if(fileDescriptor!=-1) then
 			R4=addr;
 			call MOD_3;
 		restore;
+		//print "Hello7";
 		//print "bharat4";
 		//Incrementing lseek value
 		[OPEN_FILE_TABLE + 4*open_file_index + 2] = [OPEN_FILE_TABLE + 4*open_file_index + 2]+1;		
@@ -164,7 +171,7 @@ if(fileDescriptor!=-1) then
 			[physicalAddrRetVal]=0;
 			//changing back to user stack
 			SP = userSP;
-
+//print "Hello8";
 			//reset mode flag (0 indicates process is in user mode).
 			[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
 			ireturn;
@@ -197,7 +204,7 @@ endif;
 
 //changing back to user stack
 SP = userSP;
-
+//print "Returning";
 //reset mode flag (0 indicates process is in user mode).
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
 

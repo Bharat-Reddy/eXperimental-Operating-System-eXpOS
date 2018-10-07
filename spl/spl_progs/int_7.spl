@@ -11,7 +11,7 @@ userSP = SP;
 [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
 SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
 
-
+//print "Hi1";
 //accessing the file descriptor
 alias physicalPageNum R1;
 alias offset R2;
@@ -40,7 +40,7 @@ then
 		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
 		ireturn;
 	endif;
-
+//print "Hi2";
 	alias user_area_page R6;
 	user_area_page = [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+11];
 
@@ -74,15 +74,19 @@ then
 			[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
 			ireturn;
 	endif;
-
+//print "Hi3";
 	//Acquiring Inode
 	backup;
 		R1=4;
 		R2=[SYSTEM_STATUS_TABLE+1];
 		R3=inode_index;
 		call MOD_0;
-
+		//print "Strange";
+		//print "-------";
+		//print R0;
+		//print "-------------";
 		if(R0==-1) then
+		//print "Too Str";
 			restore;
 			[physicalAddrRetVal]=-1;
 			//changing back to user stack
@@ -93,7 +97,7 @@ then
 			ireturn;
 		endif;
 	restore;
-
+//print "Hi4";
 	alias lseek R9;
 	lseek = [OPEN_FILE_TABLE + 4*open_file_index + 2];
 
@@ -114,7 +118,7 @@ then
 		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
 		ireturn;
 	endif;
-
+//print "Hi5";
 	/////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////
 	if(lseek%512==0 && lseek == [INODE_TABLE + 16 * inode_index + 2 ] ) then
@@ -141,25 +145,31 @@ then
 			ireturn;
 		endif;
 
-		[INODE_TABLE+16*inode_index+lseek/512+6] = block_no;
+		[INODE_TABLE+16*inode_index+lseek/512+8] = block_no;
 	endif;
-
+//print "Hi6";
 	alias block_index R11;
 	alias block_offset R12;
 	alias block_no R13;
 
 	block_index = lseek/512;
-	block_no = [INODE_TABLE+16*inode_index+6+block_index];
+	block_no = [INODE_TABLE+16*inode_index+8+block_index];
 	block_offset = lseek%512;
-
+//print "lllllllllllll";
+//print block_no;
+//print inode_index;
+//print "llllllllllll";
 	backup;
 		R1=1;
 		R2=block_no;
-		R3=offset;
+		R3=block_offset;
 		R4=[[PTBR + 2 * ((userSP - 3) / 512)] * 512 + ((userSP - 3) % 512)];
-		call MOD_3;
-	restore;
 
+		call MOD_3;
+		
+	restore;
+	
+//print "Hi7";
 	if(lseek==[INODE_TABLE + 16 * inode_index + 2 ]) then
 		[INODE_TABLE + 16 * inode_index + 2 ]=[INODE_TABLE + 16 * inode_index + 2 ]+1;
 		[ROOT_FILE+8*inode_index+1]=[ROOT_FILE+8*inode_index+1]+1;
@@ -174,7 +184,7 @@ then
 		R3=inode_index;
 		call MOD_0;
 	restore;
-
+//print "Hi8";
 	[physicalAddrRetVal]=0;
 	//changing back to user stack
 	SP = userSP;

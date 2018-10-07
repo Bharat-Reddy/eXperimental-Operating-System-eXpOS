@@ -15,7 +15,6 @@ if(functionNum==2 || functionNum==1) then
 
 	alias buffer_no R5;
 	buffer_no = block_no%4;
-
 	backup;
 		R1=1;
 		R2=[SYSTEM_STATUS_TABLE+1];
@@ -35,7 +34,6 @@ if(functionNum==2 || functionNum==1) then
 			[BUFFER_TABLE+4*buffer_no+1]=0;
 
 		endif;
-
 		backup;
 			R1=2;
 			R2=[SYSTEM_STATUS_TABLE+1];
@@ -47,9 +45,12 @@ if(functionNum==2 || functionNum==1) then
 		[BUFFER_TABLE+4*buffer_no+0]=block_no;
 
 	endif;
-
 	if(functionNum==1) then
-		[(71+buffer_no)*512+offset]=[word];
+		[(71+buffer_no)*512+offset]=word;
+		//print "----------";
+		//print word;
+		//print buffer_no;
+		//print "--------";
 		[BUFFER_TABLE+4*buffer_no+1]=1;
 	endif;
 
@@ -57,7 +58,6 @@ if(functionNum==2 || functionNum==1) then
 		[word] = [(71+buffer_no)*512+offset];
 
 	endif;
-	
 	backup;
 		R1=2;
 		R2=[SYSTEM_STATUS_TABLE+1];

@@ -39,3 +39,4 @@ load --exec /home/bharat/myexpos/expl/samples/child.xsm
 load --exec /home/bharat/myexpos/expl/samples/f_read.xsm
 load --exec /home/bharat/myexpos/expl/samples/m_sort_S.xsm
 load --exec /home/bharat/myexpos/expl/samples/m_sort_C.xsm
+load --exec /home/bharat/myexpos/expl/samples/st_25.xsm

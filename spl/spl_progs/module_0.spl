@@ -9,6 +9,7 @@ if(functionNum==1) then
 	while([BUFFER_TABLE+4*buffer_no+2]!=-1) do
 		[PROCESS_TABLE+16*currentPID+4]=WAIT_BUFFER;
 		[PROCESS_TABLE+16*currentPID+5]=buffer_no;
+
 		backup;
 		call MOD_5;
 		restore;

@@ -39,7 +39,7 @@ if(functionNum==2) then //Free user area page
 		if([userAreaPageNo*512+i]==1) then
 			backup;
 			R1=7;
-			R2=[SYSTEM_STATUS_TABLE+1];
+			R2=currentPID;
 			R3=[userAreaPageNo*512+i+1];
 			call MOD_0;
 
@@ -70,14 +70,14 @@ endif;
 
 if(functionNum==3) then //Exit process function
 
-	if([PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] != 9) then
+	if([PROCESS_TABLE + currentPID * 16 + 9] != 9) then
 		alias i R3;
 		i=0;
 		while(i<=15) do
-			if([PROCESS_TABLE+16*i+4]==WAIT_PROCESS && [PROCESS_TABLE+i*16+5]==[SYSTEM_STATUS_TABLE+1]) then
+			if([PROCESS_TABLE+16*i+4]==WAIT_PROCESS && [PROCESS_TABLE+i*16+5]==currentPID) then
 				[PROCESS_TABLE+16*i+4]=READY;
 			endif;
-			if([PROCESS_TABLE+16*i+2]==[SYSTEM_STATUS_TABLE+1]) then
+			if([PROCESS_TABLE+16*i+2]==currentPID) then
 				[PROCESS_TABLE+16*i+2]=-1;
 			endif;
 			i=i+1;
@@ -158,4 +158,49 @@ if(functionNum==4) then //Free page table function
 	endwhile;
 
 	return;
+endif;
+
+if(functionNum==5) then
+
+	alias i R15;
+	i=0;
+	while(i<60) do
+		if([INODE_TABLE+16*i+1]!=-1) then
+			backup;
+				R1=4;
+				R2=[SYSTEM_STATUS_TABLE+1];
+				R3=i;
+				call MOD_0;
+			restore;
+		endif;
+		i=i+1;
+	endwhile;
+
+	i=2;
+	while(i<=MAX_PROC_NUM - 1) do
+		if(i!=[SYSTEM_STATUS_TABLE+1] && [PROCESS_TABLE+16*i+4]!=TERMINATED) then
+			backup;
+				R1=3;
+				R2=i;
+				call MOD_1;
+			restore;
+		endif;
+		i=i+1;
+	endwhile;
+
+	i=0;
+	while(i<MAX_FILE_NUM) do
+		if([INODE_TABLE+16*i+1]!=-1) then
+			backup;
+				R1=5;
+				R2=[SYSTEM_STATUS_TABLE+1];
+				R3=i;
+				call MOD_0;
+			restore;
+		endif;
+		i=i+1;
+	endwhile;
+
+	return;
+
 endif;
