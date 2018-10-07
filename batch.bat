@@ -1,4 +1,4 @@
-load --init /home/bharat/myexpos/expl/samples/f_read.xsm
+load --init /home/bharat/myexpos/expl/samples/shell.xsm
 load --int=10 /home/bharat/myexpos/spl/spl_progs/int_10.xsm
 load --exhandler /home/bharat/myexpos/spl/spl_progs/exception_handler.xsm
 load --os /home/bharat/myexpos/spl/spl_progs/os_startup.xsm
@@ -28,10 +28,14 @@ load --exec /home/bharat/myexpos/expl/samples/even.xsm
 load --exec /home/bharat/myexpos/expl/samples/odd.xsm
 load --exec /home/bharat/myexpos/expl/samples/gcd.xsm
 load --exec /home/bharat/myexpos/expl/samples/sort.xsm
-load --exec /home/bharat/myexpos/expl/samples/stage_22.xsm
+load --exec /home/bharat/myexpos/expl/samples/st_22_1.xsm
 load --exec /home/bharat/myexpos/expl/samples/stage_24.xsm
 load --exec /home/bharat/myexpos/expl/samples/create.xsm
 load --exec /home/bharat/myexpos/expl/samples/delete.xsm
 load --data /home/bharat/myexpos/expl/samples/mdata.dat
+load --data /home/bharat/myexpos/expl/samples/numbers.dat
 load --exec /home/bharat/myexpos/expl/samples/parent.xsm
+load --exec /home/bharat/myexpos/expl/samples/child.xsm
 load --exec /home/bharat/myexpos/expl/samples/f_read.xsm
+load --exec /home/bharat/myexpos/expl/samples/m_sort_S.xsm
+load --exec /home/bharat/myexpos/expl/samples/m_sort_C.xsm

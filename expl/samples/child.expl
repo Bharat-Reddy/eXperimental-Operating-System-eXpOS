@@ -1,95 +1,89 @@
-int main()
-{
+type
+
+  List
+
+  {
+
+    int data;
+
+    List next;
+
+  }
+
+endtype
+
+
 decl
-	int num,temp,count,i;
+
+	List head, p, q;
+
 enddecl
 
-begin
-	temp = exposcall("Read",-1,num);
 
-	count=0;
-	while(count<10) do 
-		temp = exposcall("Write",-2,num);
-		num=num+1;
-		count=count+1;
-		i=0;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		i=i+1;
-		
-		
+int main()
+
+{
+
+decl
+
+	int x, temp, pid, counter;
+
+enddecl
+
+
+begin
+
+	x = initialize();
+
+	pid = exposcall("Getpid");
+
+
+	head=null;
+
+	counter=0;
+
+	while(counter<10) do
+
+		p=alloc();
+
+		p.data=pid*100 + counter;
+
+		p.next=null;
+
+
+		if(head==null) then
+
+			head=p;
+
+			q=p;
+
+		else
+
+			q.next=p;
+
+			q=q.next;
+
+		endif;
+
+
+		counter=counter+1;
+
 	endwhile;
+
+
+	p=head;
+
+	while(p!=null) do
+
+		write(p.data);
+
+		p=p.next;
+
+	endwhile;
+
+
 	return 0;
+
 end
+
 }

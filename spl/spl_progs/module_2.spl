@@ -55,6 +55,21 @@ if(functionNum==2) then //Release page
 	return;
 endif;
 
+if(functionNum==3) then
+	alias i R15;
+	i=DISK_FREE_AREA;
+	while(i <= DISK_SWAP_AREA - 1) do
+		if([DISK_FREE_LIST+i]==0) then
+			[DISK_FREE_LIST+i]=1;
+			R0=i;
+			return;
+		endif;
+		i=i+1;
+	endwhile;
+	R0=-1;
+	return;
+endif;
+
 if(functionNum==4) then //release block function
 
 	alias block_no R2;

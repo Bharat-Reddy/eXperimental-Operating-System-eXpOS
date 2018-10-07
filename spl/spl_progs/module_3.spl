@@ -3,7 +3,8 @@
 
 alias functionNum R1;
 
-if(functionNum==2) then
+
+if(functionNum==2 || functionNum==1) then
 
 	alias block_no R12;
 	alias offset R13;
@@ -47,19 +48,23 @@ if(functionNum==2) then
 
 	endif;
 
-	[word] = [(71+buffer_no)*512+offset];
-	//print "-----";
-	//print [(71+buffer_no)*512+offset];
-	//print "----";
+	if(functionNum==1) then
+		[(71+buffer_no)*512+offset]=[word];
+		[BUFFER_TABLE+4*buffer_no+1]=1;
+	endif;
 
+	if(functionNum==2) then
+		[word] = [(71+buffer_no)*512+offset];
+
+	endif;
+	
 	backup;
 		R1=2;
 		R2=[SYSTEM_STATUS_TABLE+1];
 		R3=buffer_no;
 		call MOD_0;
 	restore;
-
-	return;
+	return;	
 
 endif;
 

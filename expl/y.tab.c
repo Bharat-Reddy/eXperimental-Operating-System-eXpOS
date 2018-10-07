@@ -63,7 +63,7 @@
 
 /* Copy the first part of user declarations.  */
 #line 1 "abstree.y" /* yacc.c:339  */
- 
+
     #include <stdio.h>
     #include <stdlib.h>
     #include <string.h>
@@ -564,9 +564,9 @@ static const yytype_uint16 yyrline[] =
      368,   379,   386,   391,   405,   410,   414,   418,   438,   443,
      448,   453,   458,   471,   482,   492,   496,   505,   515,   519,
      531,   547,   552,   556,   559,   564,   569,   597,   601,   612,
-     616,   629,   633,   637,   641,   645,   649,   653,   657,   661,
-     665,   669,   673,   677,   681,   685,   688,   691,   695,   700,
-     705,   709,   713,   739,   743,   747,   751,   755
+     616,   628,   632,   636,   640,   644,   648,   652,   656,   660,
+     664,   668,   672,   676,   680,   684,   687,   690,   694,   699,
+     704,   708,   712,   739,   743,   747,   751,   755
 };
 #endif
 
@@ -1582,15 +1582,15 @@ yyreduce:
   case 5:
 #line 109 "abstree.y" /* yacc.c:1646  */
     {
-                                            
+
                                             }
 #line 1588 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 8:
 #line 118 "abstree.y" /* yacc.c:1646  */
-    { 
-	                                    TInstall((yyvsp[-3].nptr) -> name,0,Fhead); //size is initialized to 0. actual size is calculated in TInstall 
+    {
+	                                    TInstall((yyvsp[-3].nptr) -> name,0,Fhead); //size is initialized to 0. actual size is calculated in TInstall
                                		}
 #line 1596 "y.tab.c" /* yacc.c:1646  */
     break;
@@ -1639,7 +1639,7 @@ yyreduce:
   case 16:
 #line 148 "abstree.y" /* yacc.c:1646  */
     {
-                                   
+
                                 }
 #line 1645 "y.tab.c" /* yacc.c:1646  */
     break;
@@ -1647,10 +1647,10 @@ yyreduce:
   case 17:
 #line 153 "abstree.y" /* yacc.c:1646  */
     {
-                            
+
                             verify((yyvsp[0].nptr),1,0,0,NULL);
-                            GInstall((yyvsp[0].nptr) -> name,declarationType,1,NULL);                                
-                            
+                            GInstall((yyvsp[0].nptr) -> name,declarationType,1,NULL);
+
                         }
 #line 1656 "y.tab.c" /* yacc.c:1646  */
     break;
@@ -1750,7 +1750,7 @@ yyreduce:
                         {
                             yyerror("Unknown user-defined type\n");
                             exit(1);
-                        
+
                         }
                     }
 #line 1757 "y.tab.c" /* yacc.c:1646  */
@@ -1772,7 +1772,7 @@ yyreduce:
 #line 213 "abstree.y" /* yacc.c:1646  */
     {
                    FdeclarationType = TLookup((yyvsp[0].nptr) -> name);
-                        
+
                     if(FdeclarationType == NULL)
                     {
                         yyerror("Unknown user-defined type\n");
@@ -1804,7 +1804,7 @@ yyreduce:
 #line 232 "abstree.y" /* yacc.c:1646  */
     {
                                         verify((yyvsp[0].nptr),0,0,1,NULL);
-                                        PInstall((yyvsp[0].nptr) -> name,FdeclarationType); 
+                                        PInstall((yyvsp[0].nptr) -> name,FdeclarationType);
                                     }
 #line 1810 "y.tab.c" /* yacc.c:1646  */
     break;
@@ -1823,7 +1823,7 @@ yyreduce:
 
   case 39:
 #line 242 "abstree.y" /* yacc.c:1646  */
-    {  
+    {
                                                                 defcount++; //  to keep track of number of functions defined
 
                                                                 Gtemp = GLookup((yyvsp[-7].nptr) -> name);
@@ -1874,10 +1874,10 @@ yyreduce:
                                                                 Ltemp = Lhead;
 
                                                                 while(Ltemp != NULL)
-                                                                {                                                               
+                                                                {
                                                                     fprintf(intermediate, "PUSH R0\n");
                                                                     Ltemp = Ltemp -> next;
-                                                                }                                                               
+                                                                }
 
                                                                 codegen((yyvsp[-1].nptr));
 
@@ -1958,7 +1958,7 @@ yyreduce:
                                 Ltemp = Lhead;
 
                                 while(Ltemp != NULL)
-                                {                                                                
+                                {
                                     fprintf(intermediate, "PUSH R0\n");
                                     Ltemp = Ltemp -> next;
                                 }
@@ -1989,8 +1989,8 @@ yyreduce:
 
   case 50:
 #line 368 "abstree.y" /* yacc.c:1646  */
-    {   
-                                if(declarationType == (yyvsp[-1].nptr) -> type) 
+    {
+                                if(declarationType == (yyvsp[-1].nptr) -> type)
                                     (yyval.nptr) = TreeCreate((yyvsp[-1].nptr)->type, NODE_RET,NULL,NULL,NULL,NULL,(yyvsp[-1].nptr),NULL);
                                 else
                                 {
@@ -2035,7 +2035,7 @@ yyreduce:
                                     {
                                     	type_comp((yyvsp[-3].nptr) -> type, (yyvsp[-1].nptr) -> type , 'a');
                                     }
-                                    (yyval.nptr) = TreeCreate(TLookup("void"), NODE_ASGN,NULL,NULL,NULL,(yyvsp[-3].nptr),(yyvsp[-1].nptr),NULL);  
+                                    (yyval.nptr) = TreeCreate(TLookup("void"), NODE_ASGN,NULL,NULL,NULL,(yyvsp[-3].nptr),(yyvsp[-1].nptr),NULL);
                                 }
 #line 2041 "y.tab.c" /* yacc.c:1646  */
     break;
@@ -2044,8 +2044,8 @@ yyreduce:
 #line 405 "abstree.y" /* yacc.c:1646  */
     {
                                             type_assign_arr((yyvsp[-6].nptr),(yyvsp[-4].nptr),0);
-                                            type_comp((yyvsp[-6].nptr)-> type,(yyvsp[-1].nptr) -> type,'a'); 
-                                            (yyval.nptr) = TreeCreate(TLookup("void"), NODE_ARRAY_ASGN,NULL,NULL,NULL,(yyvsp[-6].nptr),(yyvsp[-4].nptr),(yyvsp[-1].nptr)); 
+                                            type_comp((yyvsp[-6].nptr)-> type,(yyvsp[-1].nptr) -> type,'a');
+                                            (yyval.nptr) = TreeCreate(TLookup("void"), NODE_ARRAY_ASGN,NULL,NULL,NULL,(yyvsp[-6].nptr),(yyvsp[-4].nptr),(yyvsp[-1].nptr));
                                           }
 #line 2051 "y.tab.c" /* yacc.c:1646  */
     break;
@@ -2054,7 +2054,7 @@ yyreduce:
 #line 410 "abstree.y" /* yacc.c:1646  */
     {
                                  type_assign((yyvsp[-2].nptr),NULL,0,0,0,0,1);
-                                 (yyval.nptr) = TreeCreate(TLookup("void"), NODE_READ,NULL,NULL,NULL,NULL,(yyvsp[-2].nptr),NULL); 
+                                 (yyval.nptr) = TreeCreate(TLookup("void"), NODE_READ,NULL,NULL,NULL,NULL,(yyvsp[-2].nptr),NULL);
                                 }
 #line 2060 "y.tab.c" /* yacc.c:1646  */
     break;
@@ -2063,7 +2063,7 @@ yyreduce:
 #line 414 "abstree.y" /* yacc.c:1646  */
     {
                                                 type_assign_arr((yyvsp[-5].nptr),(yyvsp[-3].nptr),0);
-                                                (yyval.nptr) = TreeCreate(TLookup("void"), NODE_ARRAY_READ,NULL,NULL,NULL,NULL,(yyvsp[-5].nptr),(yyvsp[-3].nptr)); 
+                                                (yyval.nptr) = TreeCreate(TLookup("void"), NODE_ARRAY_READ,NULL,NULL,NULL,NULL,(yyvsp[-5].nptr),(yyvsp[-3].nptr));
                                             }
 #line 2069 "y.tab.c" /* yacc.c:1646  */
     break;
@@ -2088,34 +2088,34 @@ yyreduce:
                                             exit(1);
                                         }
                                     }
-                                    
+
                                 }
 #line 2094 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 58:
 #line 439 "abstree.y" /* yacc.c:1646  */
-    { 
+    {
                                		type_comp((yyvsp[-5].nptr) -> type, TLookup("boolean"),'i');
-                                    (yyval.nptr) = TreeCreate(TLookup("void"), NODE_IF,NULL,NULL,NULL,(yyvsp[-5].nptr),(yyvsp[-2].nptr),NULL); 
+                                    (yyval.nptr) = TreeCreate(TLookup("void"), NODE_IF,NULL,NULL,NULL,(yyvsp[-5].nptr),(yyvsp[-2].nptr),NULL);
                                }
 #line 2103 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 59:
 #line 444 "abstree.y" /* yacc.c:1646  */
-    { 
+    {
                                		type_comp((yyvsp[-7].nptr) -> type, TLookup("boolean"),'e');
-                                    (yyval.nptr) = TreeCreate(TLookup("void"), NODE_IF_ELSE,NULL,NULL,NULL,(yyvsp[-7].nptr),(yyvsp[-4].nptr),(yyvsp[-2].nptr)); 
+                                    (yyval.nptr) = TreeCreate(TLookup("void"), NODE_IF_ELSE,NULL,NULL,NULL,(yyvsp[-7].nptr),(yyvsp[-4].nptr),(yyvsp[-2].nptr));
                                 }
 #line 2112 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 60:
 #line 449 "abstree.y" /* yacc.c:1646  */
-    { 
+    {
                                		type_comp((yyvsp[-5].nptr) -> type, TLookup("boolean"),'w');
-                                    (yyval.nptr) = TreeCreate(TLookup("void"), NODE_WHILE,NULL,NULL,NULL,(yyvsp[-5].nptr),(yyvsp[-2].nptr),NULL); 
+                                    (yyval.nptr) = TreeCreate(TLookup("void"), NODE_WHILE,NULL,NULL,NULL,(yyvsp[-5].nptr),(yyvsp[-2].nptr),NULL);
                                 }
 #line 2121 "y.tab.c" /* yacc.c:1646  */
     break;
@@ -2142,7 +2142,7 @@ yyreduce:
                                             else
                                             {
                                                 head = TreeCreate(TLookup("integer"),NODE_ALLOC,NULL,NULL,NULL,NULL,NULL,NULL);
-                                                (yyval.nptr) = TreeCreate(TLookup("void"), NODE_ASGN,NULL,NULL,NULL,(yyvsp[-5].nptr),head,NULL);        
+                                                (yyval.nptr) = TreeCreate(TLookup("void"), NODE_ASGN,NULL,NULL,NULL,(yyvsp[-5].nptr),head,NULL);
                                             }
                                         }
 #line 2149 "y.tab.c" /* yacc.c:1646  */
@@ -2154,7 +2154,7 @@ yyreduce:
                                             head = get_last((yyvsp[-3].nptr));
                                             head1 = get_last((yyvsp[-1].nptr));
                                             if(head1 -> type == head -> type)
-                                                (yyval.nptr) = TreeCreate(TLookup("void"), NODE_ASGN,NULL,NULL,NULL,(yyvsp[-3].nptr),(yyvsp[-1].nptr),NULL);        
+                                                (yyval.nptr) = TreeCreate(TLookup("void"), NODE_ASGN,NULL,NULL,NULL,(yyvsp[-3].nptr),(yyvsp[-1].nptr),NULL);
                                             else
                                             {
                                                 yyerror("conflicting assignment types in field1\n");
@@ -2169,7 +2169,7 @@ yyreduce:
     {
                                             head = get_last((yyvsp[-3].nptr));
                                             if((yyvsp[-1].nptr) -> type == head -> type)
-                                                (yyval.nptr) = TreeCreate(TLookup("void"), NODE_ASGN,NULL,NULL,NULL,(yyvsp[-3].nptr),(yyvsp[-1].nptr),NULL);        
+                                                (yyval.nptr) = TreeCreate(TLookup("void"), NODE_ASGN,NULL,NULL,NULL,(yyvsp[-3].nptr),(yyvsp[-1].nptr),NULL);
                                             else
                                             {
                                                 yyerror("conflicting assignment types in field2\n");
@@ -2183,7 +2183,7 @@ yyreduce:
 #line 492 "abstree.y" /* yacc.c:1646  */
     {
                                             type_assign((yyvsp[-2].nptr),NULL,1,1,0,0,0);
-                                            (yyval.nptr) = TreeCreate(TLookup("void"),NODE_FREE,NULL,NULL,NULL,NULL,(yyvsp[-2].nptr),NULL); 
+                                            (yyval.nptr) = TreeCreate(TLookup("void"),NODE_FREE,NULL,NULL,NULL,NULL,(yyvsp[-2].nptr),NULL);
                                         }
 #line 2189 "y.tab.c" /* yacc.c:1646  */
     break;
@@ -2197,7 +2197,7 @@ yyreduce:
                                                 yyerror("cannot FREE non-udt\n");
                                                 exit(1);
                                             }
-                                            (yyval.nptr) = TreeCreate(TLookup("void"),NODE_FREE,NULL,NULL,NULL,NULL,(yyvsp[-2].nptr),NULL); 
+                                            (yyval.nptr) = TreeCreate(TLookup("void"),NODE_FREE,NULL,NULL,NULL,NULL,(yyvsp[-2].nptr),NULL);
 	                                    }
 #line 2203 "y.tab.c" /* yacc.c:1646  */
     break;
@@ -2206,13 +2206,13 @@ yyreduce:
 #line 505 "abstree.y" /* yacc.c:1646  */
     {
                                             head = get_last((yyvsp[-2].nptr));
-                                            
+
                                             if(head -> type != TLookup("integer") && head -> type != TLookup("string") )
                                             {
                                                 yyerror("cannot READ a udt type\n");
                                                 exit(1);
                                             }
-                                            (yyval.nptr) = TreeCreate(TLookup("void"),NODE_READ,NULL,NULL,NULL,NULL,(yyvsp[-2].nptr),NULL); 
+                                            (yyval.nptr) = TreeCreate(TLookup("void"),NODE_READ,NULL,NULL,NULL,NULL,(yyvsp[-2].nptr),NULL);
 	                                    }
 #line 2218 "y.tab.c" /* yacc.c:1646  */
     break;
@@ -2230,14 +2230,14 @@ yyreduce:
 #line 519 "abstree.y" /* yacc.c:1646  */
     {
                                 head = get_last((yyvsp[-3].nptr));
-                                
+
                                 if(head -> type == TLookup("integer") || head -> type == TLookup("string")
                                     || head -> type == TLookup("array_integer") || head -> type == TLookup("array_string"))
                                 {
                                     yyerror("cannot assign null to a non-udt\n");
                                     exit(1);
                                 }
-								(yyval.nptr) = TreeCreate(TLookup("void"), NODE_ASGN,NULL,NULL,NULL,(yyvsp[-3].nptr),(yyvsp[-1].nptr),NULL); 
+								(yyval.nptr) = TreeCreate(TLookup("void"), NODE_ASGN,NULL,NULL,NULL,(yyvsp[-3].nptr),(yyvsp[-1].nptr),NULL);
 						    }
 #line 2243 "y.tab.c" /* yacc.c:1646  */
     break;
@@ -2267,7 +2267,7 @@ yyreduce:
 #line 547 "abstree.y" /* yacc.c:1646  */
     {
                                         head = TreeCreate(TLookup("void"), NODE_INIT,NULL,NULL,NULL,NULL,NULL,NULL);
-        								(yyval.nptr) = TreeCreate(TLookup("void"), NODE_ASGN,NULL,NULL,NULL,(yyvsp[-5].nptr),head,NULL); 
+        								(yyval.nptr) = TreeCreate(TLookup("void"), NODE_ASGN,NULL,NULL,NULL,(yyvsp[-5].nptr),head,NULL);
 							         }
 #line 2273 "y.tab.c" /* yacc.c:1646  */
     break;
@@ -2310,7 +2310,7 @@ yyreduce:
 #line 569 "abstree.y" /* yacc.c:1646  */
     {
                             head1 = head = get_last((yyvsp[-2].nptr));
-                            
+
                             temp1 = head -> type;
                             if(temp1 != TLookup("string") && temp1 != TLookup("integer")
                                 && temp1 != TLookup("array_integer") && temp1 != TLookup("array_string"))
@@ -2372,7 +2372,6 @@ yyreduce:
   case 80:
 #line 616 "abstree.y" /* yacc.c:1646  */
     {
-                                                    indicator = 1;
                                                     exprcount++;
                                                     head = (yyvsp[-2].nptr);
 
@@ -2382,200 +2381,200 @@ yyreduce:
                                                     head -> ptr1 = (yyvsp[0].nptr);
                                                     (yyval.nptr) = (yyvsp[-2].nptr);
                                                     }
-#line 2386 "y.tab.c" /* yacc.c:1646  */
+#line 2385 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 81:
-#line 629 "abstree.y" /* yacc.c:1646  */
+#line 628 "abstree.y" /* yacc.c:1646  */
     {
                                 type_comp((yyvsp[-2].nptr)->type,(yyvsp[0].nptr)->type,'+');
                                 (yyval.nptr) = TreeCreate(TLookup("integer"), NODE_PLUS , NULL,NULL, NULL, (yyvsp[-2].nptr), (yyvsp[0].nptr), NULL);
                             }
-#line 2395 "y.tab.c" /* yacc.c:1646  */
+#line 2394 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 82:
-#line 633 "abstree.y" /* yacc.c:1646  */
+#line 632 "abstree.y" /* yacc.c:1646  */
     {
                                 type_comp((yyvsp[-2].nptr)->type,(yyvsp[0].nptr)->type,'-');
-                                (yyval.nptr) = TreeCreate(TLookup("integer"), NODE_MINUS , NULL,NULL , NULL, (yyvsp[-2].nptr), (yyvsp[0].nptr), NULL);                                
+                                (yyval.nptr) = TreeCreate(TLookup("integer"), NODE_MINUS , NULL,NULL , NULL, (yyvsp[-2].nptr), (yyvsp[0].nptr), NULL);
                             }
-#line 2404 "y.tab.c" /* yacc.c:1646  */
+#line 2403 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 83:
-#line 637 "abstree.y" /* yacc.c:1646  */
+#line 636 "abstree.y" /* yacc.c:1646  */
     {
                                 type_comp((yyvsp[-2].nptr)->type,(yyvsp[0].nptr)->type,'*');
-                                (yyval.nptr) = TreeCreate(TLookup("integer"), NODE_MUL , NULL,NULL , NULL, (yyvsp[-2].nptr), (yyvsp[0].nptr), NULL);                                
+                                (yyval.nptr) = TreeCreate(TLookup("integer"), NODE_MUL , NULL,NULL , NULL, (yyvsp[-2].nptr), (yyvsp[0].nptr), NULL);
                             }
-#line 2413 "y.tab.c" /* yacc.c:1646  */
+#line 2412 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 84:
-#line 641 "abstree.y" /* yacc.c:1646  */
+#line 640 "abstree.y" /* yacc.c:1646  */
     {
                                 type_comp((yyvsp[-2].nptr)->type,(yyvsp[0].nptr)->type,'/');
-                                (yyval.nptr) = TreeCreate(TLookup("integer"), NODE_DIV , NULL,NULL , NULL, (yyvsp[-2].nptr), (yyvsp[0].nptr), NULL);                                
+                                (yyval.nptr) = TreeCreate(TLookup("integer"), NODE_DIV , NULL,NULL , NULL, (yyvsp[-2].nptr), (yyvsp[0].nptr), NULL);
                             }
-#line 2422 "y.tab.c" /* yacc.c:1646  */
+#line 2421 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 85:
-#line 645 "abstree.y" /* yacc.c:1646  */
+#line 644 "abstree.y" /* yacc.c:1646  */
     {
                                 type_comp((yyvsp[-2].nptr)->type,(yyvsp[0].nptr)->type,'%');
                                 (yyval.nptr) = TreeCreate(TLookup("integer"), NODE_MOD , NULL,NULL , NULL, (yyvsp[-2].nptr), (yyvsp[0].nptr), NULL);
                             }
-#line 2431 "y.tab.c" /* yacc.c:1646  */
+#line 2430 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 86:
-#line 649 "abstree.y" /* yacc.c:1646  */
+#line 648 "abstree.y" /* yacc.c:1646  */
     {
                                 type_comp((yyvsp[-2].nptr)->type,(yyvsp[0].nptr)->type,'<');
                                 (yyval.nptr) = TreeCreate(TLookup("boolean"), NODE_LT , NULL, NULL, NULL, (yyvsp[-2].nptr), (yyvsp[0].nptr), NULL);
                             }
-#line 2440 "y.tab.c" /* yacc.c:1646  */
+#line 2439 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 87:
-#line 653 "abstree.y" /* yacc.c:1646  */
+#line 652 "abstree.y" /* yacc.c:1646  */
     {
                                 type_comp((yyvsp[-2].nptr)->type,(yyvsp[0].nptr)->type,'#');
                                 (yyval.nptr) = TreeCreate(TLookup("boolean"), NODE_LE , NULL, NULL, NULL, (yyvsp[-2].nptr), (yyvsp[0].nptr), NULL);
                             }
-#line 2449 "y.tab.c" /* yacc.c:1646  */
+#line 2448 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 88:
-#line 657 "abstree.y" /* yacc.c:1646  */
+#line 656 "abstree.y" /* yacc.c:1646  */
     {
                                 type_comp((yyvsp[-2].nptr)->type,(yyvsp[0].nptr)->type,'>');
                                 (yyval.nptr) = TreeCreate(TLookup("boolean"), NODE_GT , NULL, NULL, NULL, (yyvsp[-2].nptr), (yyvsp[0].nptr), NULL);
                             }
-#line 2458 "y.tab.c" /* yacc.c:1646  */
+#line 2457 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 89:
-#line 661 "abstree.y" /* yacc.c:1646  */
+#line 660 "abstree.y" /* yacc.c:1646  */
     {
                                 type_comp((yyvsp[-2].nptr)->type,(yyvsp[0].nptr)->type,'$');
                                 (yyval.nptr) = TreeCreate(TLookup("boolean"), NODE_GE , NULL, NULL, NULL, (yyvsp[-2].nptr), (yyvsp[0].nptr), NULL);
                             }
-#line 2467 "y.tab.c" /* yacc.c:1646  */
+#line 2466 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 90:
-#line 665 "abstree.y" /* yacc.c:1646  */
+#line 664 "abstree.y" /* yacc.c:1646  */
     {
                                 type_comp((yyvsp[-2].nptr)->type,(yyvsp[0].nptr)->type,'d');
                                 (yyval.nptr) = TreeCreate(TLookup("boolean"), NODE_DEQ, NULL, NULL, NULL, (yyvsp[-2].nptr), (yyvsp[0].nptr), NULL);
                             }
-#line 2476 "y.tab.c" /* yacc.c:1646  */
+#line 2475 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 91:
-#line 669 "abstree.y" /* yacc.c:1646  */
+#line 668 "abstree.y" /* yacc.c:1646  */
     {
                                 type_comp((yyvsp[-2].nptr)->type,(yyvsp[0].nptr)->type,'n');
                                 (yyval.nptr) = TreeCreate(TLookup("boolean"), NODE_NEQ, NULL, NULL, NULL, (yyvsp[-2].nptr), (yyvsp[0].nptr), NULL);
                             }
-#line 2485 "y.tab.c" /* yacc.c:1646  */
+#line 2484 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 92:
-#line 673 "abstree.y" /* yacc.c:1646  */
+#line 672 "abstree.y" /* yacc.c:1646  */
     {
                                 type_comp((yyvsp[-2].nptr)->type,(yyvsp[0].nptr)->type,'&');
                                 (yyval.nptr) = TreeCreate(TLookup("boolean"), NODE_AND, NULL, NULL, NULL, (yyvsp[-2].nptr), (yyvsp[0].nptr), NULL);
                             }
-#line 2494 "y.tab.c" /* yacc.c:1646  */
+#line 2493 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 93:
-#line 677 "abstree.y" /* yacc.c:1646  */
+#line 676 "abstree.y" /* yacc.c:1646  */
     {
                                 type_comp((yyvsp[-2].nptr)->type,(yyvsp[0].nptr)->type,'|');
                                 (yyval.nptr) = TreeCreate(TLookup("boolean"), NODE_OR, NULL, NULL, NULL, (yyvsp[-2].nptr), (yyvsp[0].nptr), NULL);
                             }
-#line 2503 "y.tab.c" /* yacc.c:1646  */
+#line 2502 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 94:
-#line 681 "abstree.y" /* yacc.c:1646  */
+#line 680 "abstree.y" /* yacc.c:1646  */
     {
                                 type_comp((yyvsp[0].nptr)->type,NULL,'!');
                                 (yyval.nptr) = TreeCreate(TLookup("boolean"), NODE_NOT, NULL, NULL, NULL, NULL, (yyvsp[0].nptr), NULL);
                             }
-#line 2512 "y.tab.c" /* yacc.c:1646  */
+#line 2511 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 95:
-#line 685 "abstree.y" /* yacc.c:1646  */
+#line 684 "abstree.y" /* yacc.c:1646  */
     {
                                 (yyval.nptr) = (yyvsp[-1].nptr);
                             }
-#line 2520 "y.tab.c" /* yacc.c:1646  */
+#line 2519 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 96:
-#line 688 "abstree.y" /* yacc.c:1646  */
+#line 687 "abstree.y" /* yacc.c:1646  */
     {
                                 (yyval.nptr) = (yyvsp[0].nptr);
                             }
-#line 2528 "y.tab.c" /* yacc.c:1646  */
+#line 2527 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 97:
-#line 691 "abstree.y" /* yacc.c:1646  */
+#line 690 "abstree.y" /* yacc.c:1646  */
     {
                                 (yyval.nptr) = (yyvsp[0].nptr);
 				(yyval.nptr)->type = TLookup("integer");
                             }
-#line 2537 "y.tab.c" /* yacc.c:1646  */
+#line 2536 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 98:
-#line 695 "abstree.y" /* yacc.c:1646  */
+#line 694 "abstree.y" /* yacc.c:1646  */
     {
                                 (yyvsp[0].nptr) -> value.intval = ((yyvsp[0].nptr) -> value.intval)*-1;   //negating the value
                                 (yyval.nptr) = (yyvsp[0].nptr);
 				(yyval.nptr)->type = TLookup("integer");
                             }
-#line 2547 "y.tab.c" /* yacc.c:1646  */
+#line 2546 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 99:
-#line 700 "abstree.y" /* yacc.c:1646  */
+#line 699 "abstree.y" /* yacc.c:1646  */
     {
-                                
+
         						(yyval.nptr) = (yyvsp[0].nptr);
 							(yyval.nptr)->type = TLookup("string");
         					}
-#line 2557 "y.tab.c" /* yacc.c:1646  */
+#line 2556 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 100:
-#line 705 "abstree.y" /* yacc.c:1646  */
+#line 704 "abstree.y" /* yacc.c:1646  */
     {
 				    			type_assign((yyvsp[0].nptr),NULL,0,0,0,0,0);
 				    			(yyval.nptr) = (yyvsp[0].nptr);
 				            }
-#line 2566 "y.tab.c" /* yacc.c:1646  */
+#line 2565 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 101:
-#line 709 "abstree.y" /* yacc.c:1646  */
+#line 708 "abstree.y" /* yacc.c:1646  */
     {
 								type_assign_arr((yyvsp[-3].nptr),(yyvsp[-1].nptr),0);
 								(yyval.nptr) = TreeCreate((yyvsp[-3].nptr) -> type,NODE_ARRAY,NULL,NULL,NULL,(yyvsp[-3].nptr),(yyvsp[-1].nptr),NULL);
                             }
-#line 2575 "y.tab.c" /* yacc.c:1646  */
+#line 2574 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 102:
-#line 713 "abstree.y" /* yacc.c:1646  */
+#line 712 "abstree.y" /* yacc.c:1646  */
     {
         						type_assign_arr((yyvsp[-3].nptr),(yyvsp[-1].nptr),1);
 
@@ -2591,6 +2590,7 @@ yyreduce:
                                     yyerror("Unequal number of arguments\n");
                                     exit(1);
                                 }
+                                
                                 //differentiating b/w one and more than one arguments
                                 if(indicator == 1)
                                 {
@@ -2881,22 +2881,22 @@ yyreturn:
 #line 761 "abstree.y" /* yacc.c:1906  */
 
 
-void yyerror(char const *s) 
-{ 
-    printf("%d: %s\n",lineno,s); 
+void yyerror(char const *s)
+{
+    printf("%d: %s\n",lineno,s);
     return ;
-} 
+}
 
-int main(int argc,char* argv[]) 
-{ 
+int main(int argc,char* argv[])
+{
     TInstall("integer",1,NULL);
     TInstall("string",1,NULL);
     TInstall("boolean",1,NULL);
     TInstall("array_integer",1,NULL);
     TInstall("array_string",1,NULL);
     TInstall("void",0,NULL);
-    TInstall("dummy",0,NULL); // This is for creating the fieldlist in case of udt 
-    
+    TInstall("dummy",0,NULL); // This is for creating the fieldlist in case of udt
+
     if (argc<2)
     {
         printf("Please provide an input filename\n");
@@ -2912,7 +2912,7 @@ int main(int argc,char* argv[])
         }
         else
             yyin = fp;
-    }    
-    yyparse(); 
-    return 0; 
+    }
+    yyparse();
+    return 0;
 }

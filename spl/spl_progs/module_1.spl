@@ -21,6 +21,7 @@ if(functionNum==1) then //get free pcb
 	endif;
 
 	[PROCESS_TABLE + (index * 16) + 1]=index;
+	[PROCESS_TABLE + (index * 16) + 4] = ALLOCATED;
 	[PROCESS_TABLE + (index * 16) + 14]=PAGE_TABLE_BASE+index*20;
 	[PROCESS_TABLE + (index * 16) + 15]=10;
 	R0=index;

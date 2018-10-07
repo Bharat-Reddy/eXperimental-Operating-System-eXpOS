@@ -13,9 +13,9 @@ int main()
 begin
 
           temp = exposcall("Read",-1,filename);
-          write("Helloaa");
-          filedis = exposcall("Open", filename);
-          write("Hellobb");
+
+          filedis = exposcall("Open", "numbers.dat");
+
           semid = exposcall("Semget");
 
           pid = exposcall("Fork");
