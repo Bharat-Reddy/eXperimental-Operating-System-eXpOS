@@ -1,0 +1,106 @@
+decl
+     int wrtr;
+enddecl
+
+int main()
+{
+    decl
+	int temp,pid,fileD,semID,iter;
+	string s;
+    enddecl
+    begin
+	temp = exposcall("Heapset");
+		
+	semID = exposcall("Semget");
+	wrtr = exposcall("Alloc",1);
+
+	wrtr = 2;
+
+	temp = exposcall("Fork");
+
+	pid = exposcall("Getpid");
+
+	if(pid == 2) then
+	    fileD = exposcall("Open","f0.dat");
+	
+	    iter = 0;
+	    while(iter < 100) do
+		temp = exposcall("SemLock",semID);
+		
+		if(wrtr == pid) then
+		        temp = exposcall("Read",fileD,s);
+            	        write(s);
+			iter = iter + 1;
+			wrtr = 3;
+		endif;
+
+		temp = exposcall("SemUnLock",semID);	
+	    endwhile;
+
+            temp = exposcall("Close",fileD);
+	endif;
+
+	if(pid == 3) then
+            fileD = exposcall("Open","f1.dat");
+
+            iter = 0;
+            while(iter < 100) do
+                temp = exposcall("SemLock",semID);
+
+                if(wrtr == pid) then
+                        temp = exposcall("Read",fileD,s);
+                        write(s);
+                        iter = iter + 1;
+                        wrtr = 4;
+                endif;
+
+                temp = exposcall("SemUnLock",semID);
+            endwhile;
+
+            temp = exposcall("Close",fileD);
+	endif;
+
+	if(pid == 4) then
+            fileD = exposcall("Open","f2.dat");
+
+            iter = 0;
+            while(iter < 100) do
+                temp = exposcall("SemLock",semID);
+
+                if(wrtr == pid) then
+                        temp = exposcall("Read",fileD,s);
+                        write(s);
+                        iter = iter + 1;
+                        wrtr = 5;
+                endif;
+
+                temp = exposcall("SemUnLock",semID);
+            endwhile;
+
+            temp = exposcall("Close",fileD);
+	endif;
+
+	if(pid == 5) then
+            fileD = exposcall("Open","f3.dat");
+
+            iter = 0;
+            while(iter < 100) do
+                temp = exposcall("SemLock",semID);
+
+                if(wrtr == pid) then
+                        temp = exposcall("Read",fileD,s);
+                        write(s);
+                        iter = iter + 1;
+                        wrtr = 2;
+                endif;
+
+                temp = exposcall("SemUnLock",semID);
+            endwhile;
+
+            temp = exposcall("Close",fileD);
+	endif;
+
+	temp = exposcall("Semrelease", semID);
+	return 0;
+    end
+}

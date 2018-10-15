@@ -1,0 +1,110 @@
+int main()
+
+{
+
+decl
+
+          int temp, pid1,pid2,pid3,pid,temp2,filedesc,p,i;
+
+          string filename;
+
+enddecl
+
+begin
+
+		  //temp = exposcall("Write",-2,"Enter f_name");
+		  //temp=exposcall("Read",-1,filename);
+
+		  //temp = exposcall("Write",-2,"Enter prmsn");
+		  //temp=exposcall("Read",-1,permission);
+
+			  	
+
+		  //temp=exposcall("Create",filename, permission);
+
+		  temp = exposcall("Fork");
+
+		  if(temp!=0) then
+
+		  	temp = exposcall("Wait",temp);
+		  	temp = exposcall("Exec","vishal.xsm");
+
+		  else
+
+		  	pid1 = exposcall("Fork");
+
+
+		  	if(pid1!=0) then
+		  		temp = exposcall("Wait",pid1);
+		  		//write("First");
+		  		temp=exposcall("Create","first.dat", 1);
+		  		filedesc = exposcall("Open","first.dat");
+
+		  		i = 0;
+				while (i<100) do 
+					p=i*4;
+					temp = exposcall("Write",filedesc,p);
+					i=i+1;
+				endwhile;
+
+		  	else
+
+		  		pid2 = exposcall("Fork");
+
+		  		if(pid2!=0) then
+		  			temp = exposcall("Wait",pid2);
+		  			//write("Second");
+		  			temp=exposcall("Create","second.dat", 1);
+		  			filedesc = exposcall("Open","second.dat");
+
+			  		i = 0;
+					while (i<101) do 
+						p=i*4+1;
+						temp = exposcall("Write",filedesc,p);
+						i=i+1;
+					endwhile;
+
+		  		else
+		  			pid3 = exposcall("Fork");
+
+		  			if(pid3!=0) then
+		  			temp = exposcall("Wait",pid3);
+		  			//write("Third");
+		  			temp=exposcall("Create","third.dat", 1);
+		  			filedesc = exposcall("Open","third.dat");
+
+			  		i = 0;
+					while (i<102) do 
+						p=i*4+2;
+						temp = exposcall("Write",filedesc,p);
+						i=i+1;
+					endwhile;
+
+
+		  			else
+		  				//write("Fourth");
+		  				temp=exposcall("Create","fourth.dat", 1);
+
+		  				filedesc = exposcall("Open","fourth.dat");
+
+				  		i = 0;
+						while (i<103) do 
+							p=i*4+3;
+							temp = exposcall("Write",filedesc,p);
+							i=i+1;
+						endwhile;
+
+		  			endif;
+		  			
+
+		  		endif;
+
+		  	endif;
+
+		  endif;
+
+		  return 0;
+
+end
+
+}

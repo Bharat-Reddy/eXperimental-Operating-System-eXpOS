@@ -1,0 +1,108 @@
+type
+Share
+{
+          int data;
+}
+endtype
+
+decl
+     Share wrtr;
+enddecl
+
+int main()
+{
+    decl
+	int temp,pid,fileD,semID,iter;
+	string s;
+    enddecl
+
+    begin
+	temp = exposcall("Heapset");
+		
+	semID = exposcall("Semget");
+
+	wrtr = exposcall("Alloc",1);
+
+	wrtr.data = 2;
+
+
+	temp = exposcall("Fork");
+	temp = exposcall("Fork");
+
+	pid = exposcall("Getpid");
+
+	if(pid == 2) then
+	
+	    iter = 0;
+	    while(iter < 100) do
+		temp = exposcall("SemLock",semID);
+
+		temp = wrtr.data;
+
+		if(temp == pid) then
+			write("p2");
+			iter = iter + 1;
+			wrtr.data = 3;
+		endif;
+		temp = exposcall("SemUnLock",semID);
+	    endwhile;
+	endif;
+
+	if(pid == 3) then
+
+            iter = 0;
+            while(iter < 100) do
+                temp = exposcall("SemLock",semID);
+	
+		temp = wrtr.data;
+
+                if(temp == pid) then
+                        write("p3");
+                        iter = iter + 1;
+                        wrtr.data = 4;
+                endif;
+
+                temp = exposcall("SemUnLock",semID);
+            endwhile;
+	endif;
+
+        if(pid == 4) then
+
+            iter = 0;
+            while(iter < 100) do
+                temp = exposcall("SemLock",semID);
+
+                temp = wrtr.data;
+
+                if(temp == pid) then
+                        write("p4");
+                        iter = iter + 1;
+                        wrtr.data = 5;
+                endif;
+
+                temp = exposcall("SemUnLock",semID);
+            endwhile;
+        endif;
+
+        if(pid == 5) then
+
+            iter = 0;
+            while(iter < 100) do
+                temp = exposcall("SemLock",semID);
+
+                temp = wrtr.data;
+
+                if(temp == pid) then
+                        write("p5");
+                        iter = iter + 1;
+                        wrtr.data = 2;
+                endif;
+
+                temp = exposcall("SemUnLock",semID);
+            endwhile;
+        endif;
+
+	temp = exposcall("Semrelease", semID);
+	return 0;
+    end
+}
