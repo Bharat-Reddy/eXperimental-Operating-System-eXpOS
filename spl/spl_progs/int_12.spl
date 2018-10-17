@@ -1,0 +1,54 @@
+// LOGOUT SYATEM CALL
+
+alias userSP R0; 
+alias physicalAddrRetVal R1;
+
+userSP = SP;
+physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+
+//Switching to kernel stack
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP; //Saving sp value in UPTR field
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1; //Setting up kernel stack
+
+//Setting mode flag to system call number
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 28;
+
+//If current process is not shell return -1
+if([SYSTEM_STATUS_TABLE+1]!=2) then
+
+	[physicalAddrRetVal] = -1;
+	//reset mode flag (0 indicates process is in user mode).
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+	//changing back to user stack
+	SP = userSP;
+
+	ireturn;
+endif;
+
+// Kill all System cal
+backup;
+	R1=5;
+	R2=[SYSTEM_STATUS_TABLE+1];
+	call MOD_1;
+restore;
+
+
+//Terminating shell
+[PROCESS_TABLE + 16*[SYSTEM_STATUS_TABLE+1]+4]=TERMINATED;
+
+///////////////// ---TRICKY--- ///////////////////
+alias entry_point R14;
+alias temp R13;
+temp = PAGE_TABLE_BASE+40;
+entry_point = [[temp+8]*512+1];
+
+[[temp+16]*512] = entry_point;
+[PROCESS_TABLE+16*2+13]=8*512;
+
+///////////////////////////////////////////
+
+[PROCESS_TABLE+16*1+4]=READY;
+
+//Invoke Scheduler
+call MOD_5;

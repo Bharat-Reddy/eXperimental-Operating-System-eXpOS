@@ -160,10 +160,11 @@ if(functionNum==4) then //Free page table function
 	return;
 endif;
 
-if(functionNum==5) then
+if(functionNum==5) then //Kill all function
 
 	alias i R15;
 	i=0;
+	//For each entry in inode table acquire lock
 	while(i<60) do
 		if([INODE_TABLE+16*i+1]!=-1) then
 			backup;
@@ -177,18 +178,20 @@ if(functionNum==5) then
 	endwhile;
 
 	i=2;
+	//Killing all processes except idle and init/login
 	while(i<=MAX_PROC_NUM - 1) do
 		if(i!=[SYSTEM_STATUS_TABLE+1] && [PROCESS_TABLE+16*i+4]!=TERMINATED) then
 			backup;
 				R1=3;
 				R2=i;
-				call MOD_1;
+				call MOD_1; //exit process systemcall
 			restore;
 		endif;
 		i=i+1;
 	endwhile;
 
 	i=0;
+	//Releasing all acquired inode's
 	while(i<MAX_FILE_NUM) do
 		if([INODE_TABLE+16*i+1]!=-1) then
 			backup;

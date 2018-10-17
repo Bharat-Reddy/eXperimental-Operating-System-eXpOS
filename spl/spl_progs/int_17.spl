@@ -1,0 +1,107 @@
+// LOGIN SYSTEM CALL
+
+alias userSP R0; 
+alias physicalAddrRetVal R1;
+alias username R2;
+alias password R3;
+alias physicalPageNum R4;
+alias offset R5;
+alias userid R6;
+alias i R7;
+alias encrypted_pass R8;
+
+userSP = SP;
+physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+
+//Switching to kernel stack
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP; //Saving sp value in UPTR field
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1; //Setting up kernel stack
+
+//Setting mode flag to system call number
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 27;
+
+
+//If PID of current process is not 1 then return -2.
+//Because only Login/INIT process can call login system call.
+if([SYSTEM_STATUS_TABLE+1]!=1) then
+	[physicalAddrRetVal] = -2;
+
+	//reset mode flag (0 indicates process is in user mode).
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+	//changing back to user stack
+	SP = userSP;
+	ireturn;
+endif;
+
+//Extracting username
+physicalPageNum = [PTBR + 2 * ((userSP - 4)/ 512)];
+offset = (userSP - 4) % 512;
+username = [(physicalPageNum * 512) + offset];
+
+//Extracting Password
+physicalPageNum = [PTBR + 2 * ((userSP - 3)/ 512)];
+offset = (userSP - 3) % 512;
+password = [(physicalPageNum * 512) + offset];
+
+//Searching usertable for entered username
+i=0;
+userid=-1;
+while(i<16) do
+	if([USER_TABLE+ 2*i + 0]==username) then
+		userid=i;
+		break;
+	endif;
+	i=i+1;
+endwhile;
+
+//If user does not exist return -1
+if(userid==-1) then
+	[physicalAddrRetVal] = -1;
+
+	//reset mode flag (0 indicates process is in user mode).
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+	//changing back to user stack
+	SP = userSP;
+	ireturn;
+endif;
+
+encrypted_pass = password;
+encrypt encrypted_pass;
+
+//Checking if password typed is correct or not
+//If wrong return -1
+if([USER_TABLE+ 2*userid + 1] != encrypted_pass) then
+	[physicalAddrRetVal] = -1;
+
+	//reset mode flag (0 indicates process is in user mode).
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+	//changing back to user stack
+	SP = userSP;
+	ireturn;
+endif;
+
+//Setting process table values for shell
+
+[PROCESS_TABLE + 2*16 + 4] = CREATED;
+[PROCESS_TABLE + 2*16 + 3] = userid;
+
+//Setting state of login process as WAIT_PROCESS
+[PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+4]=WAIT_PROCESS;
+[PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+5]=2;
+
+//Scheduler
+backup;
+call MOD_5;
+restore;
+
+//Returning 0, Indicating SUCCESS
+[physicalAddrRetVal] = 0;
+//changing back to user stack
+SP = userSP;
+//reset mode flag (0 indicates process is in user mode).
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+ireturn;

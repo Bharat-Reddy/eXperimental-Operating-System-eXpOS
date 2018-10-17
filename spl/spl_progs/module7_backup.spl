@@ -1,10 +1,17 @@
+//BOOT MODULE
+
 //timer interrupt
 loadi(4,17);
 loadi(5,18);
 
+//disk interrupt
+loadi(6,19);
+loadi(7,20);
+
 //console interrupt
 loadi(8,21);
 loadi(9,22);
+
 
 //shared library
 loadi(63,13);
@@ -13,6 +20,17 @@ loadi(64,14);
 //init programme
 loadi(65,7);
 loadi(66,8);
+
+//ROOT FILE
+loadi(62,5);
+
+//INT 4
+loadi(10,23);
+loadi(11,24);
+
+//INT 5
+loadi(12,25);
+loadi(13,26);
 
 //INT 10
 loadi(22,35);
@@ -34,6 +52,38 @@ loadi(15,28);
 loadi(20,33);
 loadi(21,34);
 
+//INT 8
+loadi(18,31);
+loadi(19,32);
+
+//INT 11
+loadi(24,37);
+loadi(25,38);
+
+//INT 12
+loadi(26,39);
+loadi(27,40);
+
+//INT 13
+loadi(28,41);
+loadi(29,42);
+
+//INT 14
+loadi(30,43);
+loadi(31,44);
+
+//INT 15
+loadi(32,45);
+loadi(33,46);
+
+//INT 16
+loadi(34,47);
+loadi(35,48);
+
+//INT 17
+loadi(36,49);
+loadi(37,50);
+
 //Module 0
 loadi(40,53);
 loadi(41,54);
@@ -50,9 +100,20 @@ loadi(43,56);
 loadi(44,57);
 loadi(45,58);
 
+//Module 3
+loadi(46,59);
+loadi(47,60);
+
 //Inode Table
 loadi(59,3);
 loadi(60,4);
+
+//Loading SHELL Programme
+loadi(67,9);
+loadi(68,10);
+
+//Loading Disk Free List
+loadi(61,2);
 
 //Setting memory free list
 alias i R0;
@@ -67,6 +128,24 @@ while(i<=127) do
 	i=i+1;
 endwhile;
 
+//Initializing file_open_table
+i=0;
+while(i<MAX_OPENFILE_NUM) do
+	[OPEN_FILE_TABLE+4*i+0]=-1;
+	[OPEN_FILE_TABLE+4*i+1]=0;
+	i=i+1;
+endwhile;
+
+//Initialising Semaphore table
+
+i=0;
+while(i<32) do
+	[SEMAPHORE_TABLE+i*4+0]=-1;
+	[SEMAPHORE_TABLE+i*4+1]=0;
+	i=i+1;
+endwhile;
+
+
 //Initialising WAIT_MEM_COUNT to 0
 [SYSTEM_STATUS_TABLE+3]=0;
 
@@ -75,6 +154,26 @@ endwhile;
 
 //Initialising terminal status to 0
 [TERMINAL_STATUS_TABLE] = 0;
+
+//Disk terminal status to 0
+[DISK_STATUS_TABLE] = 0;
+
+//Initializing file status table
+i=0;
+while(i<60) do
+	[FILE_STATUS_TABLE+i*4+0]=-1;
+	[FILE_STATUS_TABLE+i*4+1]=-1;
+	i=i+1;
+endwhile;
+
+//Initializing buffer table
+i=0;
+while(i<4) do
+	[BUFFER_TABLE+i*4+0]=-1;
+	[BUFFER_TABLE+i*4+1]=0;
+	[BUFFER_TABLE+i*4+2]=-1;
+	i=i+1;
+endwhile;
 
 //---------------------------------------INIT PROCESS -------------------------//
 PTBR=PAGE_TABLE_BASE+20;
@@ -109,110 +208,51 @@ PTLR=10;
 [PTBR+19]="0110";
 
 
-[PROCESS_TABLE+16+11]=80;
+[PROCESS_TABLE+16+11]=80; //user area page of init
+
+//Setting up per-process resource table in last 16 words of user area page
+alias ind R13;
+ind=496;
+while(ind<=511) do
+	[80*512+ind]=-1;
+	ind=ind+2;
+endwhile;
+//Initially per process resource table is empty
+
+//Setting up disk map table for INIT process
+alias disk_map R11;
+disk_map= DISK_MAP_TABLE + 10*1;
+[disk_map]=-1;
+[disk_map+1]=-1;
+[disk_map+2]=-1;
+[disk_map+3]=-1;
+[disk_map+4]=65;
+[disk_map+5]=66;
+[disk_map+6]=-1;
+[disk_map+7]=-1;
+[disk_map+8]=-1;
+[disk_map+9]=-1;
+
+
 [PROCESS_TABLE+16+1]=1;
 [PROCESS_TABLE+16+4]=CREATED;
 [PROCESS_TABLE+16+13]=8*512;
 [PROCESS_TABLE+16+12]=0;
 [PROCESS_TABLE+16+14]=PAGE_TABLE_BASE+20;
 [PROCESS_TABLE+16+15]=10;
+[PROCESS_TABLE+16+3]=1; //setting userid to root
 
 [76*512]=[65*512+1];
 
+//all other processes initially terminated
+multipush (R0);
+alias count R0;
+count = 2;
 
-//---------------------------------------- Even numbers executable ------------------------//
-//Loading code pages from disk to memory
-loadi(83,70);
-
-PTBR=PAGE_TABLE_BASE+40;
-PTLR=10;
-
-//Library
-[PTBR+0]=63;
-[PTBR+1]="0100";
-[PTBR+2]=64;
-[PTBR+3]="0100";
-
-//Heap
-[PTBR+4]=84;
-[PTBR+5]="0110";
-[PTBR+6]=85;
-[PTBR+7]="0110";
-
-//Code
-[PTBR+8]=83;
-[PTBR+9]="0100";
-[PTBR+10]=-1;
-[PTBR+11]="0100";
-[PTBR+12]=-1;
-[PTBR+13]="0000";
-[PTBR+14]=-1;
-[PTBR+15]="0000";
-
-//Stack
-[PTBR+16]=86;
-[PTBR+17]="0110";
-[PTBR+18]=87;
-[PTBR+19]="0110";
-
-
-[PROCESS_TABLE+16*2+11]=88;
-[PROCESS_TABLE+16*2+1]=2;
-[PROCESS_TABLE+16*2+4]=CREATED;
-[PROCESS_TABLE+16*2+13]=8*512;
-[PROCESS_TABLE+16*2+12]=0;
-[PROCESS_TABLE+16*2+14]=PAGE_TABLE_BASE+40;
-[PROCESS_TABLE+16*2+15]=10;
-
-[86*512]=[83*512+1];
-
-
-//--------------------------------------- Prime Numbers Executable --------------------------------
-
-//Loading code pages from disk to memory
-loadi(89,71);
-
-PTBR=PAGE_TABLE_BASE+60;
-PTLR=10;
-
-//Library
-[PTBR+0]=63;
-[PTBR+1]="0100";
-[PTBR+2]=64;
-[PTBR+3]="0100";
-
-//Heap
-[PTBR+4]=90;
-[PTBR+5]="0110";
-[PTBR+6]=91;
-[PTBR+7]="0110";
-
-//Code
-[PTBR+8]=89;
-[PTBR+9]="0100";
-[PTBR+10]=-1;
-[PTBR+11]="0100";
-[PTBR+12]=-1;
-[PTBR+13]="0000";
-[PTBR+14]=-1;
-[PTBR+15]="0000";
-
-//Stack
-[PTBR+16]=92;
-[PTBR+17]="0110";
-[PTBR+18]=93;
-[PTBR+19]="0110";
-
-
-[PROCESS_TABLE+16*3+11]=94;
-[PROCESS_TABLE+16*3+1]=3;
-[PROCESS_TABLE+16*3+4]=CREATED;
-[PROCESS_TABLE+16*3+13]=8*512;
-[PROCESS_TABLE+16*3+12]=0;
-[PROCESS_TABLE+16*3+14]=PAGE_TABLE_BASE+60;
-[PROCESS_TABLE+16*3+15]=10;
-
-[92*512]=[89*512+1];
+while(count < 16) do
+	[PROCESS_TABLE + count*16 + 4] = TERMINATED;
+	count = count + 1;
+endwhile;
+multipop (R0);
 
 return;
-
