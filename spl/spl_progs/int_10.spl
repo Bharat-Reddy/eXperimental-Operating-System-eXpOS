@@ -1,5 +1,3 @@
-//Exit System Call
-
 //set mode flag of cureent process to 10(exit system call)
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 10;
 
@@ -7,12 +5,31 @@
 [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
 SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
 
-//call exit process function
 backup;
 R1=3; //Function number of exit in process manager module(Module 1)
 R2=[SYSTEM_STATUS_TABLE + 1];
 call MOD_1;
 restore;
 
-//Invoke the scheduler
-call MOD_5;
+alias check R1;
+check=1;
+
+alias index R2;
+index=1;
+
+//Checking if there is any process which is not yet TERMINATED
+while(index<=15) do
+
+	if([(PROCESS_TABLE + (index * 16)) + 4]!=TERMINATED) then
+		check=0;
+		break;
+	endif;
+	index=index+1;
+endwhile;
+
+//If all processes are terminated then halt the machine
+if(check==1) then
+	halt;
+else
+	call MOD_5; //Else call the scheduler
+endif;

@@ -1,0 +1,381 @@
+////////////////////// NEW USER, /////////////////////////////////
+//////////////////////////////////////////////////////////////////
+
+alias userSP R0; 
+alias physicalPageNum R1;
+alias offset R2;
+alias Addr R3;
+alias sys_call_no R4;
+alias user_id R5;
+alias physicalAddrRetVal R6;
+alias username R7;
+alias check R8;
+alias i R9;
+alias password R10;
+alias temp R11;
+alias arg1addr R12;
+alias arg2addr R13;
+alias currPID R14;
+
+userSP=SP; //Saving value of user stack
+
+currPID=[SYSTEM_STATUS_TABLE+1];
+
+//Address of first argument
+arg1addr = ([PTBR + 2 * ((userSP - 4)/ 512)] * 512) + (userSP - 4) % 512;
+
+//Address of second Argument
+arg2addr = ([PTBR + 2 * ((userSP - 3)/ 512)] * 512) + (userSP - 3) % 512;
+
+
+//Minimizing number of calculations by using temp
+temp = PROCESS_TABLE + (currPID * 16);
+
+//Switching to kernel stack
+[temp + 13] = SP; //Saving sp value in UPTR field
+SP = [temp + 11] * 512 - 1; //Setting up kernel stack
+
+//Address of system call number
+Addr = ([PTBR + 2 * ((userSP - 5)/ 512)] * 512) + (userSP - 5) % 512;
+
+//System call number extraction
+sys_call_no=[Addr];
+
+//Calculating address of return value
+physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+
+//Setting mode flag to system call number
+[temp + 9] = sys_call_no;
+
+if(sys_call_no==22) then   //NEW USER SYSTEM CALL
+	
+	//Mode flag has already been set to system call number	
+	user_id = [temp+3];
+
+	//If current user is not root or if current process is not shell
+	if(user_id!=1 || currPID!=2) then
+		[physicalAddrRetVal] = -2;
+		//reset mode flag (0 indicates process is in user mode).
+		[temp + 9] = 0;
+
+		//changing back to user stack
+		SP = userSP;
+
+		ireturn;
+	endif;
+
+	//Extracting username (argument 1)
+	username = [arg1addr];
+
+	//Extracting Password(argument 2)
+	password = [arg2addr];
+
+	// Checking if username entered is alredy taken
+	check=-1;
+	i=0;
+	while(i<16) do
+		if([USER_TABLE+ 2*i] == username) then
+			check=0;
+			break;
+		endif;
+		i=i+1;
+	endwhile;
+
+	// if username already exists, return -1;
+	if(check==0) then
+		[physicalAddrRetVal] = -1;
+		//reset mode flag (0 indicates process is in user mode).
+		[temp + 9] = 0;
+
+		//changing back to user stack
+		SP = userSP;
+
+		ireturn;
+	endif;
+
+	// Checking if any slot in user table is free
+	check=-1;
+	i=0;
+	while(i<16) do
+		if([USER_TABLE+2*i]==-1) then
+			check=i;
+			break;
+		endif;
+		i=i+1;
+	endwhile;
+
+	//If user table is full return -3
+	if(check==-1) then
+		[physicalAddrRetVal] = -3;
+		//reset mode flag (0 indicates process is in user mode).
+		[temp + 9] = 0;
+
+		//changing back to user stack
+		SP = userSP;
+
+		ireturn;
+	endif;
+
+	//Encrypt the password
+	encrypt password;
+
+	//Set the user table entries
+	[USER_TABLE+2*check]=username;
+	[USER_TABLE+2*check+1]=password;
+
+	//restoring mode flag
+	[temp + 9] = 0;
+
+	//Setting return value to 0
+	[physicalAddrRetVal] = 0;
+	SP = [temp + 13];
+	ireturn;
+
+endif;
+
+if(sys_call_no==23) then   //REMOVE USER SYSTEM CALL
+
+	//[temp + 9] = 23; 	Already done on top buddy!
+
+	user_id = [temp+3]; //Extractinf user_id from process table of current process
+
+	//Extracting username
+	username = [arg1addr];
+
+	// If current user is not root or current process is not shell return -2
+	// If user to be removed is root or kernel then return -2
+	if(user_id!=1 || currPID!=2 || username=="root" || username == "kernel") then
+		[physicalAddrRetVal] = -2;
+		//reset mode flag (0 indicates process is in user mode).
+		[temp + 9] = 0;
+
+		//changing back to user stack
+		SP = userSP;
+
+		ireturn;
+	endif;
+
+	// Checking if a user exists in user-table with given username
+	i=0;
+	check=-1;
+	while(i<16) do
+		if([USER_TABLE+2*i]==username) then
+			check=i;
+			user_id=i;
+			break;
+		endif;
+		i=i+1;
+	endwhile;
+
+	//If the username is not found return -1;
+	if(check==-1) then
+		[physicalAddrRetVal] = -1;
+		//reset mode flag (0 indicates process is in user mode).
+		[temp + 9] = 0;
+
+		//changing back to user stack
+		SP = userSP;
+
+		ireturn;
+	endif;
+
+
+	//if there are files which are owened by the user we are going to delete, then return -3
+	i=0;
+	check=-1;
+	while(i<60) do
+		if([ROOT_FILE+8*i+3]==username) then
+			check=0;
+			break;
+		endif;	
+		i=i+1;
+	endwhile;
+
+	if(check==0) then
+		[physicalAddrRetVal] = -3;
+		//reset mode flag (0 indicates process is in user mode).
+		[temp + 9] = 0;
+
+		//changing back to user stack
+		SP = userSP;
+
+		ireturn;
+	endif;
+
+
+	//Invalidate the user table entry ny setting both felds to -1
+	[USER_TABLE+2*user_id]=-1;
+	[USER_TABLE+2*user_id+1]=-1;
+
+	//restoring mode flag
+	[temp+ 9] = 0;
+
+	//Setting return value to 0
+	[physicalAddrRetVal] = 0;
+
+	SP = [temp + 13];
+	ireturn;
+
+endif;
+
+if(sys_call_no==24) then  //SET PWD system call
+	
+	//[temp + 9] = 24; Already done on top!
+	
+	//if(currPID!=2) then
+	//	[physicalAddrRetVal] = -1;
+		//reset mode flag (0 indicates process is in user mode).
+	//	[temp + 9] = 0;
+
+		//changing back to user stack
+	//	SP = userSP;
+
+	//	ireturn;
+	//endif;
+
+	//Checking if current process is shell or not is done below
+
+	//Extracting username (argument 1)
+	username = [arg1addr];
+
+	//Extracting Password (argument 2)
+	password = [arg2addr];
+
+
+	//Finding the entry corresponding to username
+	i=0;
+	user_id=-1;
+	while(i<16) do
+		if([USER_TABLE+2*i]==username) then
+			user_id=i;
+			break;
+		endif;
+		i=i+1;
+	endwhile;
+
+	//if entry not fuond then return -2
+	if(user_id==-1) then
+		[physicalAddrRetVal] = -2;
+		//reset mode flag (0 indicates process is in user mode).
+		[temp + 9] = 0;
+		//print "Chill";
+		//changing back to user stack
+		SP = userSP;
+
+		ireturn;
+	endif;
+
+	//if([temp+3]!=user_id) then
+	//	if(user_id!=1) then
+	//		[physicalAddrRetVal] = -1;
+			//reset mode flag (0 indicates process is in user mode).
+	//		[temp + 9] = 0;
+
+			//changing back to user stack
+	//		SP = userSP;
+
+	//		ireturn;
+	//	endif;
+	//endif;
+
+	// if current process is not shell or if user tries to change some other user's password
+	// and if he is not root then return -1
+	if(currPID!=2 || (([temp+3]!=user_id) && ([temp+3]!=1))) then
+		[physicalAddrRetVal] = -1;
+		//reset mode flag (0 indicates process is in user mode).
+		
+		//print "Yeahyo";
+		[temp + 9] = 0;
+
+		//changing back to user stack
+		SP = userSP;
+
+		ireturn;
+	endif;
+
+	// Encrypt the password and put it in password field of user table
+	encrypt password;
+	[USER_TABLE+2*user_id+1]=password;
+
+	//restoring mode flag
+	[temp + 9] = 0;
+
+	//Setting return value to 0
+	[physicalAddrRetVal] = 0;
+
+	SP = [temp + 13];
+	ireturn;
+
+endif;
+
+if(sys_call_no==25) then //GET-USERNAME system call
+	
+	//[temp + 9] = 25;
+
+	//Extracting userId (argument 1)	
+	user_id = [arg1addr];
+
+	// Checking if userid is within limits
+	if(user_id<0 || user_id>15) then
+		[physicalAddrRetVal] = -1;
+		//reset mode flag (0 indicates process is in user mode).
+		[temp + 9] = 0;
+
+		//changing back to user stack
+		SP = userSP;
+
+		ireturn;
+	endif;
+
+	//If usertable entry correspondng to given userid is invalid, then return -1
+	if([USER_TABLE+2*user_id]==-1) then
+		[physicalAddrRetVal] = -1;
+		//reset mode flag (0 indicates process is in user mode).
+		[temp + 9] = 0;
+
+		//changing back to user stack
+		SP = userSP;
+
+		ireturn;
+	endif;
+
+	//Extract username from user table
+	username = [USER_TABLE+2*user_id];
+
+	//restoring mode flag
+	[temp+ 9] = 0;
+
+	//Setting return value to 0
+	//physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+	[physicalAddrRetVal] = username;
+
+	SP = [temp + 13];
+	ireturn;
+
+endif;
+
+if(sys_call_no==26) then  // GET-UID system call
+	//[temp + 9] = 26;
+
+	//Extracting username (argument 1)
+	username = [arg1addr];
+	user_id=-1;
+
+	// Loop to find userid corresponding to given username
+	i=0;
+	while(i<16) do
+		if([USER_TABLE+2*i]==username) then
+			user_id=i;
+			break;
+		endif;
+		i=i+1;
+	endwhile;
+	//restoring mode flag
+	[temp + 9] = 0;
+
+	//Setting return value to 0
+	[physicalAddrRetVal] = user_id;
+
+	SP = [temp + 13];
+	ireturn;
+endif;

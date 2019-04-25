@@ -141,13 +141,16 @@ call MOD_2;
 
 restore;
 
-//invalidate rest of code pages
-[PTBR + 10] = -1;
-[PTBR + 11] = "0000";
-[PTBR + 12] = -1;
-[PTBR + 13] = "0000";
-[PTBR + 14] = -1;
-[PTBR + 15] = "0000";
+//Invalidating remaining 3 code pages
+backup;
+alias t R14;
+t=10;
+while(t<=14) do
+	[PTBR+t]=-1;
+	[PTBR+t+1]="0000";
+	t=t+2;
+endwhile;
+restore;
 
 //Initialising disk map table of new process
 alias disk_map R11;

@@ -1,0 +1,87 @@
+//SHUTDOWN SYSTEM CALL(21)
+alias userSP R0; 
+alias physicalAddrRetVal R1;
+userSP = SP;
+physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+
+//Switching to kernel stack
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP; //Saving sp value in UPTR field
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1; //Setting up kernel stack
+
+//Setting mode flag to system call number
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 21;
+
+if([SYSTEM_STATUS_TABLE+1]!=2 || [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+3]!=1) then
+	
+	[physicalAddrRetVal] = -1;
+
+	//reset mode flag (0 indicates process is in user mode).
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+	//changing back to user stack
+	SP = userSP;
+	ireturn;
+endif;
+
+//KILL ALL ;)
+backup;
+	R1=5;
+	R2=[SYSTEM_STATUS_TABLE+1];
+	backup;
+		print [SYSTEM_STATUS_TABLE+1];
+	restore;
+
+	call MOD_1;
+restore;
+
+
+alias i R15;
+i=0;
+while(i<4) do
+	if([BUFFER_TABLE+4*i+1]==1) then
+		backup;
+			R1=1;
+			R2=[SYSTEM_STATUS_TABLE+1];
+			R3=71+i;
+			R4=[BUFFER_TABLE+4*i+0];
+			call MOD_4;
+		restore;
+	endif;
+	i=i+1;
+endwhile;
+
+//Storing inode table
+backup;
+	R1=1;
+	R2=[SYSTEM_STATUS_TABLE+1];
+	R3=59;
+	R4=3;
+	call MOD_4;
+restore;
+backup;
+	R1=1;
+	R2=[SYSTEM_STATUS_TABLE+1];
+	R3=60;
+	R4=4;
+	call MOD_4;
+restore;
+
+//Storing root file
+backup;
+	R1=1;
+	R2=[SYSTEM_STATUS_TABLE+1];
+	R3=62;
+	R4=5;
+	call MOD_4;
+restore;
+
+//Storing disk free list
+backup;
+	R1=1;
+	R2=[SYSTEM_STATUS_TABLE+1];
+	R3=61;
+	R4=2;
+	call MOD_4;
+restore;
+
+halt;

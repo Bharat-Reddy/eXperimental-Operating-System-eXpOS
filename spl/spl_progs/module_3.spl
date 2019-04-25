@@ -1,0 +1,195 @@
+/////////////////////// FILE MANAGER MODULE //////////////////////
+//////////////////////////////////////////////////////////////////
+
+alias functionNum R1;
+
+
+if(functionNum==2 || functionNum==1) then
+
+	alias block_no R12;
+	alias offset R13;
+	alias word R14;
+	block_no=R2;
+	offset=R3;
+	word=R4;
+
+	alias buffer_no R5;
+	buffer_no = block_no%4;
+	backup;
+		R1=1;
+		R2=[SYSTEM_STATUS_TABLE+1];
+		R3=buffer_no;
+		call MOD_0;
+	restore;
+
+	if([BUFFER_TABLE+4*buffer_no+0]!=block_no) then
+		if([BUFFER_TABLE+4*buffer_no+1]==1) then
+			backup;
+				R1=1;
+				R2=[SYSTEM_STATUS_TABLE+1];
+				R3=71+buffer_no;
+				R4=block_no;
+				call MOD_4;
+			restore;
+			[BUFFER_TABLE+4*buffer_no+1]=0;
+
+		endif;
+		backup;
+			R1=2;
+			R2=[SYSTEM_STATUS_TABLE+1];
+			R3=71+buffer_no;
+			R4=block_no;
+			call MOD_4;
+		restore;
+
+		[BUFFER_TABLE+4*buffer_no+0]=block_no;
+
+	endif;
+	if(functionNum==1) then
+		[(71+buffer_no)*512+offset]=word;
+		//print "----------";
+		//print word;
+		//print buffer_no;
+		//print "--------";
+		[BUFFER_TABLE+4*buffer_no+1]=1;
+	endif;
+
+	if(functionNum==2) then
+		[word] = [(71+buffer_no)*512+offset];
+
+	endif;
+	backup;
+		R1=2;
+		R2=[SYSTEM_STATUS_TABLE+1];
+		R3=buffer_no;
+		call MOD_0;
+	restore;
+	return;	
+
+endif;
+
+if(functionNum==3) then
+
+	alias filename R2;
+	alias inode_index R3;
+	alias i R4;
+	alias open_file_index R5;
+	i=0;
+	inode_index=-1;
+	while(i<60) do
+		if([INODE_TABLE+16*i+1]==filename) then
+			inode_index=i;
+			break;
+		endif;
+		i=i+1;
+	endwhile;
+
+	if(inode_index==-1) then
+		R0=-1;
+		return;
+	endif;
+
+	//Acquiring inode
+	backup;
+		R1=4;
+		R2=[SYSTEM_STATUS_TABLE + 1];
+		R3=inode_index;
+		call MOD_0;
+		if(R0==-1) then
+			restore;
+			R0=-1;
+			return;
+		endif;
+	restore;
+	
+	if([INODE_TABLE + 16*inode_index +0]==EXEC || [INODE_TABLE + 16*inode_index +1]!=filename) then
+		//Release inode
+		backup;
+			R1=5;
+			R2=[SYSTEM_STATUS_TABLE + 1];
+			R3=inode_index;
+			call MOD_0;
+		restore;
+
+		//Return -1
+		R0=-1;
+		return;
+	endif;
+
+	//Finding free entry in open_file_table
+	i=0;
+	open_file_index=-1;
+	while(i<MAX_OPENFILE_NUM) do
+		if([OPEN_FILE_TABLE + 4*i+0]==-1) then
+			open_file_index=i;
+			break;
+		endif;
+		i=i+1;
+	endwhile;
+
+	//If no free open file table entry found
+	if(open_file_index==-1) then
+		//Release inode
+		backup;
+			R1=5;
+			R2=[SYSTEM_STATUS_TABLE + 1];
+			R3=inode_index;
+			call MOD_0;
+		restore;
+
+		//Return -2
+		R0=-2;
+		return;
+	endif;
+
+	if(filename=="root") then
+		[OPEN_FILE_TABLE+4*open_file_index+0]=INODE_ROOT;
+	else
+		if([FILE_STATUS_TABLE+4*inode_index+1]==-1) then
+			[FILE_STATUS_TABLE+4*inode_index+1]=1;
+		else
+			[FILE_STATUS_TABLE+4*inode_index+1]=[FILE_STATUS_TABLE+4*inode_index+1]+1;
+		endif;
+		[OPEN_FILE_TABLE+4*open_file_index+0]=inode_index;
+	endif;
+
+	[OPEN_FILE_TABLE+4*open_file_index+1]=1;
+	[OPEN_FILE_TABLE+4*open_file_index+2]=0;
+
+	//Release inode
+	backup;
+		R1=5;
+		R2=[SYSTEM_STATUS_TABLE + 1];
+		R3=inode_index;
+		call MOD_0;
+	restore;
+
+	R0=open_file_index;
+	return;
+
+endif;
+
+if(functionNum==4) then
+	
+	alias open_file_index R2;
+	alias inode_index R3;
+	inode_index = [OPEN_FILE_TABLE+4*open_file_index+0];
+
+	[OPEN_FILE_TABLE+4*open_file_index+1]=[OPEN_FILE_TABLE+4*open_file_index+1]-1;
+	
+	if([OPEN_FILE_TABLE+4*open_file_index+1]==0) then
+		[OPEN_FILE_TABLE+4*open_file_index+0]=-1;
+		[OPEN_FILE_TABLE+4*open_file_index+1]=-1;
+		[OPEN_FILE_TABLE+4*open_file_index+2]=-1;
+		[OPEN_FILE_TABLE+4*open_file_index+3]=-1;
+
+		if(inode_index!=INODE_ROOT) then
+			[FILE_STATUS_TABLE+4*inode_index+1]=[FILE_STATUS_TABLE+4*inode_index+1]-1;
+		endif;
+		if([FILE_STATUS_TABLE+4*inode_index+1]==0) then
+			[FILE_STATUS_TABLE+4*inode_index+1]=-1;
+		endif;
+	endif;
+	return;
+
+endif;

@@ -1,0 +1,22 @@
+int main() 
+{
+decl
+	int temp,i,filedesc;
+	str filename,buff;
+enddecl
+
+begin
+	temp = exposcall("Create","a.dat",1);
+	filedesc = exposcall("Open","a.dat");
+
+	i = 0;
+	while (i<1100) do 
+		i = i + 1;
+		temp = exposcall("Write",filedesc,i);
+	endwhile;
+
+	//temp = exposcall("Seek",filedesc,-1);
+	return 0;
+
+end
+}

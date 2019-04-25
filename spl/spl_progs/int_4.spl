@@ -1,0 +1,302 @@
+/////////////////// CREATE AND DELETE SYSTEM CALLS /////////////////////////
+////////////////////////////////////////////////////////////////////////////
+
+alias userSP R0; 
+alias Num R1;
+alias temp2 R2;
+alias temp R3;
+alias sys_call_no R4;
+alias filename R5;
+alias permission R6;
+alias i R7;
+alias inode_free_entry R8;
+alias physicalAddrRetVal R9;
+alias root_file_index R10;
+alias inode_index R11;
+alias j R12;
+alias buffer_number R13;
+
+userSP = SP;
+//print "Hello1";
+//Switching to kernel stack
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP; //Saving sp value in UPTR field
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1; //Setting up kernel stack
+
+//accessing the System call number from user stack(Since system call number is before arg 1 it is at (sp-5))
+
+//physicalPageNum = [PTBR + 2 * ((userSP - 5)/ 512)];
+//offset = (userSP - 5) % 512;
+//Addr = ([PTBR + 2 * ((userSP - 5)/ 512)] * 512) + (userSP - 5) % 512;
+
+sys_call_no=[([PTBR + 2 * ((userSP - 5)/ 512)] * 512) + (userSP - 5) % 512];
+
+//Return address
+physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+
+filename = [([PTBR + 2 * ((userSP - 4)/ 512)] * 512) + (userSP - 4) % 512];
+if(sys_call_no==1) then //CREATE system call
+
+	//Setting mode flag to system call number
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 1;
+
+	//Extracting filename from userstack (argument 1)
+	//physicalPageNum = [PTBR + 2 * ((userSP - 4)/ 512)];
+	//offset = (userSP - 4) % 512;
+	//Addr = (physicalPageNum * 512) + offset;
+	//filename = [([PTBR + 2 * ((userSP - 4)/ 512)] * 512) + (userSP - 4) % 512];
+
+	//Extracting permission from userstack (argument 2)
+	//physicalPageNum = [PTBR + 2 * ((userSP - 3)/ 512)];
+	//offset = (userSP - 3) % 512;
+	//Addr = (physicalPageNum * 512) + offset;
+	permission = [([PTBR + 2 * ((userSP - 3)/ 512)] * 512) + (userSP - 3) % 512];
+
+	//Checking if file is already present by checking inode table
+	
+	i=0;
+	while(i<60) do
+		if([INODE_TABLE+16*i+1]==filename) then
+			//print "FilePresent!!";
+			//Setting return value as 0 (Success)
+			//physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+			[physicalAddrRetVal] = 0;
+
+			//reset mode flag (0 indicates process is in user mode).
+			[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+			//changing back to user stack
+			SP = userSP;
+			ireturn;
+
+		endif;
+		i=i+1;
+	endwhile;
+//print "Hello2";
+	//Finding free entry in inode table
+	inode_free_entry=-1;
+	i=0;
+	while(i<60) do
+		if([INODE_TABLE+16*i+1]==-1) then
+			inode_free_entry=i;
+			break;
+		endif;
+		i=i+1;
+	endwhile;
+
+	if(inode_free_entry==-1) then
+		//Setting return value as -1 (Failure)
+		//print "Max_FilesErr";
+		//physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+		[physicalAddrRetVal] = -1;
+
+		//reset mode flag (0 indicates process is in user mode).
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+		
+		//changing back to user stack
+		SP = userSP;
+
+		ireturn;
+	endif;
+	temp = INODE_TABLE+16*inode_free_entry;
+	temp2 = PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1];
+
+	//Settig FILE_NAME in inode table
+	[temp+1]=filename;
+
+	//Setting FILE_SIZE in inode table
+	[temp+2]=0;
+
+	//Setting FILE_TYPE to DATA	
+	[temp+0]=DATA;
+
+	//Setting block numbers to -1 (Indicating no disk blocks are allocated for the file)
+	i=8;
+	while(i<=11) do
+		[temp+i]=-1;
+		i=i+1;
+	endwhile;
+	//[INODE_TABLE+16*inode_free_entry+8]=-1;
+	//[INODE_TABLE+16*inode_free_entry+9]=-1;
+	//[INODE_TABLE+16*inode_free_entry+10]=-1;
+	//[INODE_TABLE+16*inode_free_entry+11]=-1;
+//print "Hello3";
+	//Setting userID field
+	[temp+3]=[temp2+3];
+
+	//Setting permission bit
+	[temp+4]=permission;		
+
+	root_file_index = inode_free_entry;
+//print inode_free_entry;
+	[ROOT_FILE+8*root_file_index+0] = filename; //[INODE_TABLE+16*inode_free_entry+1]; //File name
+	[ROOT_FILE+8*root_file_index+1] = 0; //[INODE_TABLE+16*inode_free_entry+2]; //File Size
+	[ROOT_FILE+8*root_file_index+2] = DATA; //[INODE_TABLE+16*inode_free_entry+0]; //File type
+
+	//Setting username using USER-ID and user table 
+	Num = [temp2+3];
+	[ROOT_FILE+8*root_file_index+3]=[USER_TABLE + 2*Num+3];
+
+	[ROOT_FILE+8*root_file_index+4] = permission; //Permission
+
+	//Changing back to user stack and return to user mode
+	SP = [temp2 + 13];
+
+	//restoring mode flag
+	[temp2 + 9] = 0;
+
+	//Setting return value to 0
+	//physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+	[physicalAddrRetVal] = 0;
+
+	ireturn;
+
+endif;
+
+if(sys_call_no==4) then //DELETE system call
+	
+	//Setting mode flag to system call number
+	[temp2 + 9] = 4;
+
+	//Extracting filename from userstack (argument 1)
+	//physicalPageNum = [PTBR + 2 * ((userSP - 4)/ 512)];
+	//offset = (userSP - 4) % 512;
+	//Addr = (physicalPageNum * 512) + offset;
+	//filename = [([PTBR + 2 * ((userSP - 4)/ 512)] * 512) + (userSP - 4) % 512];
+
+	i=0;
+	inode_index=-1;
+	while(i<60) do
+		if([INODE_TABLE+16*i+1]==filename) then
+			inode_index=i;
+			break;
+		endif;
+		i=i+1;
+	endwhile;
+	//print "Hello1";
+	if(inode_index==-1) then
+		print "NotPresent";
+		//Setting return value as 0
+		//physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+		[physicalAddrRetVal] = 0;
+
+		//reset mode flag (0 indicates process is in user mode).
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+		//changing back to user stack
+		SP = userSP;
+		ireturn;
+	endif;
+
+	temp = INODE_TABLE+16*inode_index;
+	temp2 = PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1];
+	//print "Hello2";
+	if([temp+0]!=DATA) then
+		print "NotDataFile";
+		//Setting return value as -1
+	//	physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+		[physicalAddrRetVal] = -1;
+
+		//reset mode flag (0 indicates process is in user mode).
+		[temp2 + 9] = 0;
+
+		//changing back to user stack
+		SP = userSP;
+		ireturn;
+	endif;
+	
+//(([INODE_TABLE+16*inode_index+0]!=DATA) ||
+//	(([INODE_TABLE+16*inode_index+4]==EXCLUSIVE) && ([PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+3]!=1 &&
+//			[PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+3]!=[INODE_TABLE+16*inode_index+3])))
+	//if([INODE_TABLE+16*inode_index+4]==EXCLUSIVE) then
+		if(([temp+4]==EXCLUSIVE) && ([temp2+3]!=1 &&
+			[temp2+3]!=[temp+3]) ) then
+			print "NoPermission";
+			//Setting return value as -1
+			//physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+			[physicalAddrRetVal] = -1;
+
+			//reset mode flag (0 indicates process is in user mode).
+			[temp2 + 9] = 0;
+
+			//changing back to user stack
+			SP = userSP;
+			ireturn;
+		endif;
+	//endif;
+
+	//ACQUIRING INODE
+	backup;
+		R1=4; //Function number of Acquire inode in MOD_1
+		R3=inode_index;
+		R2=[SYSTEM_STATUS_TABLE+1]; //PID of current process
+		call MOD_0;	
+	restore;
+//print "Hello3";
+	if([FILE_STATUS_TABLE + inode_index*4 +1]!=-1) then
+		//RELEASING INODE
+	print "AlrdyDeltd";
+		backup;
+			R1=5; //Function number of Release inode in MOD_1
+			R3=inode_index;
+			R2=[SYSTEM_STATUS_TABLE+1]; //PID of current process
+			call MOD_0;	
+		restore;
+		//Setting return value as -1
+		//physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+		[physicalAddrRetVal] = -2;
+
+		//reset mode flag (0 indicates process is in user mode).
+		[temp2 + 9] = 0;
+
+		//changing back to user stack
+		SP = userSP;
+		ireturn;
+	endif;
+//print "Hello4";
+	//Checking if disk blocks allocated to process are present in buffer
+	i=8;
+	while(i<=11) do
+	//If the block in in buffer
+	buffer_number = [temp+i]%MAX_BUFFER;
+	if([BUFFER_TABLE + 4*buffer_number + 0]== [temp+i]&& 
+		[BUFFER_TABLE + 4*buffer_number + 1]==1) then
+		[BUFFER_TABLE + 4*buffer_number + 1]=0;
+	endif;
+
+	//RELEASE BLOCK
+	backup;
+		R1=4; //Function number of Release block in MOD_1
+		R2=[temp+i];
+		R3=[SYSTEM_STATUS_TABLE+1]; //PID of current process
+		call MOD_2;	
+	restore;
+	i=i+1;
+	endwhile;
+//print "Hello5";
+	//Invalidating Inode entry
+	[temp+1]=-1;
+
+	//Invalidating root file entry
+	root_file_index=inode_index;
+	[ROOT_FILE + 8*root_file_index+1]=-1;
+
+	//RELEASING INODE
+	backup;
+		R1=5; //Function number of Release inode in MOD_1
+		R3=inode_index;
+		R2=[SYSTEM_STATUS_TABLE+1]; //PID of current process
+		call MOD_0;	
+	restore;
+
+	//Setting return value as 0
+	//physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+	[physicalAddrRetVal] = 0;
+
+	//reset mode flag (0 indicates process is in user mode).
+	[temp2 + 9] = 0;
+
+	//changing back to user stack
+	SP = userSP;
+	ireturn;
+
+endif;

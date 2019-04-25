@@ -26,7 +26,7 @@ while(index<=15) do
 	endif;
 	index=index+1;
 endwhile;
-breakpoint;
+
 //If all processes are terminated then halt the machine
 if(check==1) then
 	halt;
@@ -41,10 +41,8 @@ SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1; //Settin
 
 backup;
 if(EC==1) then
-	print "-------";
-	breakpoint;
+	
 	print "Ilgl_Instr";
-
 	backup;
 	R1=3; //Function number of exit in process manager module(Module 1)
 	R2=[SYSTEM_STATUS_TABLE + 1];
@@ -58,8 +56,6 @@ endif;
 
 if(EC==2) then
 	print "Ilgl_mem_acc";
-	print EMA;
-	print EIP;
 	backup;
 	R1=3; //Function number of exit in process manager module(Module 1)
 	R2=[SYSTEM_STATUS_TABLE + 1];
@@ -186,15 +182,7 @@ SP=8*512;
 
 // Settine state of other process table entries to TERMINATED
 
-multipush (R0);
-alias count R0;
-count = 2;
 
-while(count < 16) do
-	[PROCESS_TABLE + count*16 + 4] = TERMINATED;
-	count = count + 1;
-endwhile;
-multipop (R0);
 
 ireturn;
 
@@ -228,12 +216,12 @@ SP=[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+13]; //Setting sp to top of user 
 ireturn;
 
 //Switching to kernel stack
-//print "Hello1";
+
 [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE+1]*16)+13]=SP;
 SP=[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+11]*512-1;
 
 backup;
-//print "Hello2";
+
 alias reqPID R0;
 reqPID = [TERMINAL_STATUS_TABLE+1]; //PID of process which occupied terminal
 
@@ -246,12 +234,11 @@ R1=9;
 R2=reqPID;
 call MOD_0; //call resource manager module for release terminal function
 multipop(R0, R1, R2, R3, R4, R5, R6);
-//print "Hello3";
+
 restore;
 
 //changing back to user stack
 SP=[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+13];
-//print "Hello4";
 ireturn;//Switching to kernel stack
 
 [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE+1]*16)+13]=SP;
@@ -736,7 +723,7 @@ endwhile;
 //PTBR=old;
 //changing back to user stack
 SP = userSP;
-
+breakpoint;
 ireturn;//timer interrupt
 loadi(4,17);
 loadi(5,18);
@@ -781,6 +768,14 @@ loadi(21,34);
 //INT 8
 loadi(18,31);
 loadi(19,32);
+
+//INT 11
+loadi(24,37);
+loadi(25,38);
+
+//INT 15
+loadi(32,45);
+loadi(33,46);
 
 //Module 0
 loadi(40,53);
@@ -897,6 +892,18 @@ disk_map= DISK_MAP_TABLE + 10*1;
 [PROCESS_TABLE+16+15]=10;
 
 [76*512]=[65*512+1];
+
+//all other processes initially terminated
+multipush (R0);
+alias count R0;
+count = 2;
+
+while(count < 16) do
+	[PROCESS_TABLE + count*16 + 4] = TERMINATED;
+	count = count + 1;
+endwhile;
+multipop (R0);
+
 return;//SCHEDULER
 
 //getting current process id
@@ -995,6 +1002,65 @@ if(functionNum==3) then //Func number 3 == Acquire Disk
 
 endif;
 
+if(functionNum==6) then //Func number 6 == Acquire Semaphore
+	alias free_index R14;
+	alias i R13;
+	free_index=-1;
+	i=0;
+	while(i<32) do
+		if([SEMAPHORE_TABLE+i*4+1]==0) then
+			free_index=i;
+			break;
+			i=i+1;
+		endif;
+	endwhile;
+
+	if(free_index==-1) then
+		R0=-1;
+		return;
+	endif;
+
+	[SEMAPHORE_TABLE+free_index*4+0]=-1; //Setting Locking PID field to -1
+	[SEMAPHORE_TABLE+free_index*4+1]=1;  //Setting PROCESS_COUNT field to 1
+
+	R0 = free_index;
+	return;
+
+endif;
+
+if(functionNum==7) then //Func number 7 == Release Semaphore
+	
+	alias semaphore_table_index R10;
+	semaphore_table_index = R3;
+	if(semaphore_table_index<0 || semaphore_table_index>=32) then
+		R0=-1;
+		return;
+	endif;
+
+	if([SEMAPHORE_TABLE+4*semaphore_table_index+0]==[SYSTEM_STATUS_TABLE+1]) then
+		
+		[SEMAPHORE_TABLE+4*semaphore_table_index+0]=-1;
+		alias i R9;
+		i=0;
+		while(i<=15) do
+
+			if([PROCESS_TABLE+16*i+4]==WAIT_SEMAPHORE && 
+				[PROCESS_TABLE+16*i+5]==semaphore_table_index) then
+
+				[PROCESS_TABLE+16*i+4]=READY;
+
+			endif;
+			i=i+1;
+		endwhile;
+
+	endif;
+
+	[SEMAPHORE_TABLE+4*semaphore_table_index+1]=[SEMAPHORE_TABLE+4*semaphore_table_index+1]-1;
+	R0=0;
+	return;
+
+endif;
+
 if(functionNum==8) then //Func number 8 == Acquire terminal
 	
 	while( ([TERMINAL_STATUS_TABLE] ) == 1) do
@@ -1036,9 +1102,6 @@ if(functionNum==9) then //func number 9 == Release terminal
 		return;
 
 	endif;
-	else
-		return;
-
 endif;//DEVICE MANAGER MODULE
 
 alias functionNum R1;
@@ -1179,7 +1242,21 @@ if(functionNum==2) then //Free user area page
 
 endif;
 
-if(functionNum==3) then //Exit process
+if(functionNum==3) then //Exit process function
+
+	if([PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] != 9) then
+		alias i R3;
+		i=0;
+		while(i<=15) do
+			if([PROCESS_TABLE+16*i+4]==WAIT_PROCESS && [PROCESS_TABLE+i*16+5]==[SYSTEM_STATUS_TABLE+1]) then
+				[PROCESS_TABLE+16*i+4]=READY;
+			endif;
+			if([PROCESS_TABLE+16*i+2]==[SYSTEM_STATUS_TABLE+1]) then
+				[PROCESS_TABLE+16*i+2]=-1;
+			endif;
+			i=i+1;
+		endwhile;
+	endif;
 
 	//Free page table Entries
 	//multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
@@ -1370,4 +1447,282 @@ if(functionNum==5) then //get code page
 	
 	return;
 
+endif;///////////// WAIT, SIGNAL, GETPID and GETPPID System Calls //////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////
+
+alias userSP R0; 
+alias physicalPageNum R1;
+alias offset R2;
+alias Addr R3;
+alias sys_call_no R4;
+alias req_PID R5;
+alias physicalAddrRetVal R6;
+alias i R7;
+
+//Switching to kernel stack
+userSP=SP; //Saving value of user stack
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP; //Saving sp value in UPTR field
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1; //Setting up kernel stack
+
+//accessing the System call number from user stack(Since system call number is before arg 1 it is at (sp-5))
+
+physicalPageNum = [PTBR + 2 * ((userSP - 5)/ 512)];
+offset = (userSP - 5) % 512;
+Addr = (physicalPageNum * 512) + offset;
+
+sys_call_no=[Addr];
+
+if(sys_call_no==11) then //get pid system call
+
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 11; 
+
+	physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+	[physicalAddrRetVal] = [PROCESS_TABLE + 16 * [SYSTEM_STATUS_TABLE+1] + 1];
+
+	SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+	ireturn;
+
+endif;
+
+if(sys_call_no==12) then //get ppid system call
+
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 12; 
+
+	physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+	[physicalAddrRetVal] = [PROCESS_TABLE + 16 * [SYSTEM_STATUS_TABLE+1] + 2];
+
+	SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+	ireturn;
+
+endif;
+
+if(sys_call_no==13) then //wait system call
+
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 13; //Setting mode flag to system call no
+	
+	//PID is stored as argument 1(Extracting PID from user stack)
+	physicalPageNum = [PTBR + 2 * ((userSP - 4)/ 512)];
+	offset = (userSP - 4) % 512;
+	Addr = (physicalPageNum * 512) + offset;
+	req_PID=[Addr];
+
+
+	// FAILURE CASE
+	if(req_PID<0 || req_PID>=16 || req_PID==[SYSTEM_STATUS_TABLE+1] || [PROCESS_TABLE+req_PID*16+4]==TERMINATED) then
+		
+		//Setting return value as -1 (Failure)
+		
+		physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+		[physicalAddrRetVal] = -1;
+
+		//reset mode flag (0 indicates process is in user mode).
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+		
+		//changing back to user stack
+		SP = userSP;
+
+		ireturn;
+	endif;
+
+	[PROCESS_TABLE + 16 * [SYSTEM_STATUS_TABLE + 1] + 4] = WAIT_PROCESS;
+	[PROCESS_TABLE + 16 * [SYSTEM_STATUS_TABLE + 1] + 5] = req_PID;
+
+	backup;
+		call MOD_5;
+	restore;
+
+	//restoring mode flag
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+	//Setting return value to 0
+	physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+	[physicalAddrRetVal] = 0;
+
+	SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+	ireturn;
+
+endif;
+
+if(sys_call_no==14) then //Signal system call
+
+	//Setting mode flag to system call number
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 14;
+
+	i=0;
+	while(i<=15) do
+		if ([PROCESS_TABLE + i*16 + 4]==WAIT_PROCESS && 
+			[PROCESS_TABLE + i*16 + 5]==[SYSTEM_STATUS_TABLE+1]) then
+				[PROCESS_TABLE + i*16 + 4]=READY;
+		endif;
+		i=i+1;
+	endwhile;
+
+	//restoring mode flag
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+	//Setting return value to 0
+	physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+	[physicalAddrRetVal] = 0;
+
+	SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+	ireturn;
+
+endif;//////////////////////// SEMGET AND SEM-RELEASE SYSTEM CALLS//////////////////////////
+
+alias userSP R0; 
+alias physicalPageNum R1;
+alias offset R2;
+alias Addr R3;
+alias sys_call_no R4;
+alias free_entry R5;
+alias i R6;
+alias userAreaPageNo R7;
+alias physicalAddrRetVal R8;
+alias semaphore_descriptor R9;
+alias semaphore_table_index R10;
+
+userSP = SP;
+
+//Switching to kernel stack
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP; //Saving sp value in UPTR field
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1; //Setting up kernel stack
+
+//accessing the System call number from user stack(Since system call number is before arg 1 it is at (sp-5))
+
+physicalPageNum = [PTBR + 2 * ((userSP - 5)/ 512)];
+offset = (userSP - 5) % 512;
+Addr = (physicalPageNum * 512) + offset;
+
+sys_call_no=[Addr];
+
+if(sys_call_no == 17) then  //SEMGET systemcall
+	
+	//Setting mode flag to system call number
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 17;
+	userAreaPageNo = [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+11];
+	free_entry=-1;
+	i=496;
+	while(i<=511) do
+		if([userAreaPageNo*512+i]==-1) then
+			free_entry=i;
+			break;
+		endif;
+		i=i+2;
+	endwhile;
+
+	if(free_entry==-1) then
+		//Setting return value as -1 (Failure)
+		
+		physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+		[physicalAddrRetVal] = -1;
+
+		//reset mode flag (0 indicates process is in user mode).
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+		
+		//changing back to user stack
+		SP = userSP;
+
+		ireturn;
+	endif;
+
+	semaphore_descriptor=(free_entry-496)/2;
+
+	[userAreaPageNo*512+free_entry]=1; //Setting resource identifier field as semaphore(i.e. 1)
+
+	multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9);
+		
+		R1=6; //Function number of Acquire semaphore in MOD_1
+		R2=[SYSTEM_STATUS_TABLE+1]; //PID of current process
+		call MOD_1;	
+		semaphore_table_index=R0;
+	multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9);
+
+	if(semaphore_table_index==-1) then
+		//Setting return value as -2 (Failure)
+		
+		physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+		[physicalAddrRetVal] = -2;
+
+		//reset mode flag (0 indicates process is in user mode).
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+		
+		//changing back to user stack
+		SP = userSP;
+
+		ireturn;
+	endif;
+
+	//Setting semaphore table in per-process resource table 2nd word
+	[userAreaPageNo*512+free_entry+1]=semaphore_table_index;	
+
+
+
+	//Changing back to user stack and return to user mode
+	SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+
+	//restoring mode flag
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+	//Setting return value to semaphore descriptor Index in per-process resource table
+	physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+	[physicalAddrRetVal] = semaphore_descriptor;
+
+	ireturn;
+endif;
+
+if(sys_call_no == 18) then  //SEM-RELEASE systemcall
+	
+	//Setting mode flag to system call number
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 18;
+
+	userAreaPageNo = [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+11];
+
+	physicalPageNum = [PTBR + 2 * ((userSP - 4)/ 512)];
+	offset = (userSP - 4) % 512;
+	Addr = (physicalPageNum * 512) + offset;
+
+	semaphore_descriptor = [Addr];
+
+	if(semaphore_descriptor < 0 || semaphore_descriptor > 7 
+		|| [userAreaPageNo * 512 + (semaphore_descriptor * 2 + 496)] !=1) then
+
+		//Setting return value as -1 (Failure)
+		
+		physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+		[physicalAddrRetVal] = -1;
+
+		//reset mode flag (0 indicates process is in user mode).
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+		
+		//changing back to user stack
+		SP = userSP;
+
+		ireturn;
+
+	endif;
+
+	multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10);
+		
+		R1=7; //Function number of Acquire semaphore in MOD_1
+		R2=[SYSTEM_STATUS_TABLE+1]; //PID of current process
+		R3=[userAreaPageNo * 512 + (semaphore_descriptor * 2 + 496)+1];
+		call MOD_1;
+		if(R0==-1) then
+			print "SemtabIndErr";
+		endif;
+	multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10);
+
+	[userAreaPageNo * 512 + (semaphore_descriptor * 2 + 496)] = -1;
+
+	//Changing back to user stack and return to user mode
+	SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+
+	//restoring mode flag
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+	//Setting return value to 0
+	physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+	[physicalAddrRetVal] = 0;
+
+	ireturn;
 endif;

@@ -40,8 +40,33 @@ if(functionNum==2) then //Release page
 	//Increment MEM_FREE_COUNT if no process is using that page
 	if([MEMORY_FREE_LIST+R2]==0) then
 		[SYSTEM_STATUS_TABLE+2]=[SYSTEM_STATUS_TABLE+2]+1; 
+
+		alias i R10;
+		i=0;
+		while(i<16) do
+			if([PROCESS_TABLE+16*i+4]==WAIT_MEM) then
+				[PROCESS_TABLE+16*i+4]=READY;
+			endif;
+			i=i+1;
+		endwhile;
+
 	endif;
 	
+	return;
+endif;
+
+if(functionNum==3) then
+	alias i R15;
+	i=DISK_FREE_AREA;
+	while(i <= DISK_SWAP_AREA - 1) do
+		if([DISK_FREE_LIST+i]==0) then
+			[DISK_FREE_LIST+i]=1;
+			R0=i;
+			return;
+		endif;
+		i=i+1;
+	endwhile;
+	R0=-1;
 	return;
 endif;
 

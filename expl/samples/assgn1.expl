@@ -6,6 +6,7 @@ enddecl
 begin
     pid = exposcall("Fork");
     if(pid==0) then
+        num=999;
         temp = exposcall ( "Exec" , "even.xsm" );
     else
         num=111;

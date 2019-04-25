@@ -1,0 +1,19 @@
+//print "-----------";
+
+//Switching to kernel stack
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE+1]*16)+13]=SP;
+SP=[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+11]*512-1;
+
+backup;
+
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE+1]*16)+4]=READY; //Changing state of outgoing process to READY
+
+call MOD_5; //Invoking Scheduler
+
+restore;
+
+SP=[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+13]; //Setting sp to top of user stack
+[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+9] = 0; //Setting mode flag to 0
+
+ireturn;
+

@@ -1,0 +1,160 @@
+//////////////////////// SEMGET AND SEM-RELEASE SYSTEM CALLS//////////////////////////
+
+alias userSP R0; 
+alias physicalPageNum R1;
+alias offset R2;
+alias Addr R3;
+alias sys_call_no R4;
+alias free_entry R5;
+alias i R6;
+alias userAreaPageNo R7;
+alias physicalAddrRetVal R8;
+alias semaphore_descriptor R9;
+alias semaphore_table_index R10;
+
+userSP = SP;
+
+//Switching to kernel stack
+[PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP; //Saving sp value in UPTR field
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1; //Setting up kernel stack
+
+//accessing the System call number from user stack(Since system call number is before arg 1 it is at (sp-5))
+
+physicalPageNum = [PTBR + 2 * ((userSP - 5)/ 512)];
+offset = (userSP - 5) % 512;
+Addr = (physicalPageNum * 512) + offset;
+
+sys_call_no=[Addr];
+
+if(sys_call_no == 17) then  //SEMGET systemcall
+	//print "Hello1";
+	//Setting mode flag to system call number
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 17;
+	userAreaPageNo = [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+11];
+	free_entry=-1;
+	i=496;
+	while(i<=511) do
+		if([userAreaPageNo*512+i]==-1) then
+			free_entry=i;
+			break;
+		endif;
+		i=i+2;
+	endwhile;
+
+	if(free_entry==-1) then
+		//Setting return value as -1 (Failure)
+		
+		physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+		[physicalAddrRetVal] = -1;
+
+		//reset mode flag (0 indicates process is in user mode).
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+		
+		//changing back to user stack
+		SP = userSP;
+
+		ireturn;
+	endif;
+//print "Hello2";
+	semaphore_descriptor=(free_entry-496)/2;
+
+	[userAreaPageNo*512+free_entry]=1; //Setting resource identifier field as semaphore(i.e. 1)
+
+	multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9);
+		
+		R1=6; //Function number of Acquire semaphore in MOD_1
+		R2=[SYSTEM_STATUS_TABLE+1]; //PID of current process
+		call MOD_0;	
+		//print "Hello3";
+		semaphore_table_index=R0;
+	multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9);
+
+	if(semaphore_table_index==-1) then
+		//Setting return value as -2 (Failure)
+		
+		physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+		[physicalAddrRetVal] = -2;
+
+		//reset mode flag (0 indicates process is in user mode).
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+		
+		//changing back to user stack
+		SP = userSP;
+
+		ireturn;
+	endif;
+
+	//Setting semaphore table in per-process resource table 2nd word
+	[userAreaPageNo*512+free_entry+1]=semaphore_table_index;	
+
+
+
+	//Changing back to user stack and return to user mode
+	SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+
+	//restoring mode flag
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+	//Setting return value to semaphore descriptor Index in per-process resource table
+	physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+	[physicalAddrRetVal] = semaphore_descriptor;
+
+	ireturn;
+endif;
+
+if(sys_call_no == 18) then  //SEM-RELEASE systemcall
+	
+	//Setting mode flag to system call number
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 18;
+
+	userAreaPageNo = [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+11];
+
+	physicalPageNum = [PTBR + 2 * ((userSP - 4)/ 512)];
+	offset = (userSP - 4) % 512;
+	Addr = (physicalPageNum * 512) + offset;
+
+	semaphore_descriptor = [Addr];
+
+	if(semaphore_descriptor < 0 || semaphore_descriptor > 7 
+		|| [userAreaPageNo * 512 + (semaphore_descriptor * 2 + 496)] !=1) then
+
+		//Setting return value as -1 (Failure)
+		
+		physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+		[physicalAddrRetVal] = -1;
+
+		//reset mode flag (0 indicates process is in user mode).
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+		
+		//changing back to user stack
+		SP = userSP;
+
+		ireturn;
+
+	endif;
+
+	multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10);
+		
+		R1=7; //Function number of Acquire semaphore in MOD_1
+		R2=[SYSTEM_STATUS_TABLE+1]; //PID of current process
+		R3=[userAreaPageNo * 512 + (semaphore_descriptor * 2 + 496)+1];
+		call MOD_0;
+		if(R0==-1) then
+			print "SemtabIndErr";
+		endif;
+	multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R10);
+
+	[userAreaPageNo * 512 + (semaphore_descriptor * 2 + 496)] = -1;
+
+	//Changing back to user stack and return to user mode
+	SP = [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+
+	//restoring mode flag
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+	//Setting return value to 0
+	physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+	[physicalAddrRetVal] = 0;
+
+	ireturn;
+endif;

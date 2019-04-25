@@ -1,4 +1,4 @@
-//Write System Call
+/////////////////////////////// WRITE SYSTEM CALL //////////////////////////
 
 //set mode flag of cureent process to 5(write system call)
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 5;
@@ -11,7 +11,7 @@ userSP = SP;
 [PROCESS_TABLE + ( [SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
 SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
 
-
+//print "Hi1";
 //accessing the file descriptor
 alias physicalPageNum R1;
 alias offset R2;
@@ -22,15 +22,180 @@ fileDescPhysicalAddr = (physicalPageNum * 512) + offset;
 alias fileDescriptor R4;
 fileDescriptor=[fileDescPhysicalAddr];
 
+alias physicalAddrRetVal R5;
+physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+
 //checking whether file descriptor is valid or not
 if (fileDescriptor != -2)
 then
-	 alias physicalAddrRetVal R5;
-	 physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
-	 [physicalAddrRetVal] = -1;
+	 //alias physicalAddrRetVal R5;
+	 //physicalAddrRetVal = ([PTBR + 2 * ((userSP - 1) / 512)] * 512) + ((userSP - 1) % 512);
+	 //[physicalAddrRetVal] = -1;
+	if(fileDescriptor<0 || fileDescriptor>7) then
+		[physicalAddrRetVal]=-1;
+		//changing back to user stack
+		SP = userSP;
+
+		//reset mode flag (0 indicates process is in user mode).
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+		ireturn;
+	endif;
+//print "Hi2";
+	alias user_area_page R6;
+	user_area_page = [PROCESS_TABLE+16*[SYSTEM_STATUS_TABLE+1]+11];
+
+	if([user_area_page*512 + 496 + fileDescriptor*2]==-1 ||
+		[user_area_page*512 + 496 + fileDescriptor*2]!=FILE) then
+
+		[physicalAddrRetVal]=-1;
+		//changing back to user stack
+		SP = userSP;
+
+		//reset mode flag (0 indicates process is in user mode).
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+		ireturn;
+	endif;
+
+	alias open_file_index R7;
+	open_file_index = [user_area_page*512 + 496 + fileDescriptor*2 +1];
+
+	alias inode_index R8;
+	inode_index = [OPEN_FILE_TABLE + 4*open_file_index + 0];
+
+	//Checking if user ID of process==user ID of current process
+
+	if([INODE_TABLE+16*inode_index+3]!=[SYSTEM_STATUS_TABLE+1] && 
+		[INODE_TABLE+16*inode_index+4]==EXCLUSIVE) then
+			[physicalAddrRetVal]=-3;
+			//changing back to user stack
+			SP = userSP;
+
+			//reset mode flag (0 indicates process is in user mode).
+			[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+			ireturn;
+	endif;
+//print "Hi3";
+	//Acquiring Inode
+	backup;
+		R1=4;
+		R2=[SYSTEM_STATUS_TABLE+1];
+		R3=inode_index;
+		call MOD_0;
+		//print "Strange";
+		//print "-------";
+		//print R0;
+		//print "-------------";
+		if(R0==-1) then
+		//print "Too Str";
+			restore;
+			[physicalAddrRetVal]=-1;
+			//changing back to user stack
+			SP = userSP;
+
+			//reset mode flag (0 indicates process is in user mode).
+			[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+			ireturn;
+		endif;
+	restore;
+//print "Hi4";
+	alias lseek R9;
+	lseek = [OPEN_FILE_TABLE + 4*open_file_index + 2];
+
+	////////////////////// DOUBT DOUBT DOUBT ////////////////////////
+	if(lseek==MAX_FILE_SIZE) then
+		//Releasing Inode
+		backup;
+			R1=5;
+			R2=[SYSTEM_STATUS_TABLE + 1];
+			R3=inode_index;
+			call MOD_0;
+		restore;
+		[physicalAddrRetVal]=-2;
+		//changing back to user stack
+		SP = userSP;
+
+		//reset mode flag (0 indicates process is in user mode).
+		[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+		ireturn;
+	endif;
+//print "Hi5";
+	/////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////
+	if(lseek%512==0 && lseek == [INODE_TABLE + 16 * inode_index + 2 ] ) then
+		alias block_no R10;
+		multipush(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R11,R12,R13,R14,R15);
+			R1=3;
+			call MOD_2;
+			block_no=R0;
+		multipop(R0,R1,R2,R3,R4,R5,R6,R7,R8,R9,R11,R12,R13,R14,R15);
+		if(block_no==-1) then
+			//Releasing Inode
+			backup;
+				R1=5;
+				R2=[SYSTEM_STATUS_TABLE + 1];
+				R3=inode_index;
+				call MOD_0;
+			restore;
+			[physicalAddrRetVal]=-2;
+			//changing back to user stack
+			SP = userSP;
+
+			//reset mode flag (0 indicates process is in user mode).
+			[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+			ireturn;
+		endif;
+
+		[INODE_TABLE+16*inode_index+lseek/512+8] = block_no;
+	endif;
+//print "Hi6";
+	alias block_index R11;
+	alias block_offset R12;
+	alias block_no R13;
+
+	block_index = lseek/512;
+	block_no = [INODE_TABLE+16*inode_index+8+block_index];
+	block_offset = lseek%512;
+//print "lllllllllllll";
+//print block_no;
+//print inode_index;
+//print "llllllllllll";
+	backup;
+		R1=1;
+		R2=block_no;
+		R3=block_offset;
+		R4=[[PTBR + 2 * ((userSP - 3) / 512)] * 512 + ((userSP - 3) % 512)];
+
+		call MOD_3;
+		
+	restore;
+	
+//print "Hi7";
+	if(lseek==[INODE_TABLE + 16 * inode_index + 2 ]) then
+		[INODE_TABLE + 16 * inode_index + 2 ]=[INODE_TABLE + 16 * inode_index + 2 ]+1;
+		[ROOT_FILE+8*inode_index+1]=[ROOT_FILE+8*inode_index+1]+1;
+	endif;
+
+	[OPEN_FILE_TABLE + 4*open_file_index + 2]=[OPEN_FILE_TABLE + 4*open_file_index + 2]+1;
+
+	//Releasing Inode
+	backup;
+		R1=5;
+		R2=[SYSTEM_STATUS_TABLE + 1];
+		R3=inode_index;
+		call MOD_0;
+	restore;
+//print "Hi8";
+	[physicalAddrRetVal]=0;
+	//changing back to user stack
+	SP = userSP;
+
+	//reset mode flag (0 indicates process is in user mode).
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+	ireturn;	
+
 else
 	//if valid get the word from stack and call device manager module(module 4)
-	alias word R5;
+	alias word R6;
 	word = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + ((userSP - 3) % 512)];
 
 	multipush(R0, R1, R2, R3, R4, R5, R6);
@@ -46,9 +211,6 @@ else
 
 	multipop(R0, R1, R2, R3, R4, R5, R6);
 
-
-	alias physicalAddrRetVal R6;
-	physicalAddrRetVal = ([PTBR + 2 * (userSP - 1)/ 512] * 512) + ((userSP - 1) % 512);
 	[physicalAddrRetVal] = 0; //storing return value(0 for success)
 
 endif;

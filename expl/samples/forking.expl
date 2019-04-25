@@ -1,0 +1,36 @@
+int main()
+{
+decl
+	int temp;
+enddecl
+
+begin
+	
+	temp = exposcall("Fork");
+	if(temp!=-1) then
+		temp = exposcall("Fork");
+		if(temp!=-1) then
+			temp = exposcall("Fork");
+			if(temp!=-1) then
+				temp = exposcall("Fork");
+				if(temp!=-1) then
+					temp = exposcall("Fork");
+				else
+					write("Fork Error1");
+				endif;
+			else
+				write("Fork Error2");
+			endif;
+		else
+			write("Fork Error3");
+		endif;
+		temp = exposcall("Exec", "pid.xsm");
+	else
+		write("Fork Error4");
+	endif;
+
+	
+
+	return 0;
+end
+}

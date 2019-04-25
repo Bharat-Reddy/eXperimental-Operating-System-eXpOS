@@ -21,6 +21,7 @@ if(functionNum==1) then //get free pcb
 	endif;
 
 	[PROCESS_TABLE + (index * 16) + 1]=index;
+	[PROCESS_TABLE + (index * 16) + 4] = ALLOCATED;
 	[PROCESS_TABLE + (index * 16) + 14]=PAGE_TABLE_BASE+index*20;
 	[PROCESS_TABLE + (index * 16) + 15]=10;
 	R0=index;
@@ -31,6 +32,30 @@ endif;
 if(functionNum==2) then //Free user area page
 	alias userAreaPageNo R3;
 	userAreaPageNo=[PROCESS_TABLE + currentPID*16 + 11];
+
+	alias i R14;
+	i=496;
+	while(i<=511) do
+		if([userAreaPageNo*512+i]==1) then
+			backup;
+			R1=7;
+			R2=currentPID;
+			R3=[userAreaPageNo*512+i+1];
+			call MOD_0;
+
+			restore;
+		endif;
+
+		if([userAreaPageNo*512+i]==FILE) then
+			backup;
+				R1=4;
+				R2=[userAreaPageNo*512+i+1];
+				call MOD_3;
+			restore;
+		endif;
+
+		i=i+2;
+	endwhile;
 
 	//multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
 	backup;
@@ -43,7 +68,21 @@ if(functionNum==2) then //Free user area page
 
 endif;
 
-if(functionNum==3) then //Exit process
+if(functionNum==3) then //Exit process function
+
+	if([PROCESS_TABLE + currentPID * 16 + 9] != 9) then
+		alias i R3;
+		i=0;
+		while(i<=15) do
+			if([PROCESS_TABLE+16*i+4]==WAIT_PROCESS && [PROCESS_TABLE+i*16+5]==currentPID) then
+				[PROCESS_TABLE+16*i+4]=READY;
+			endif;
+			if([PROCESS_TABLE+16*i+2]==currentPID) then
+				[PROCESS_TABLE+16*i+2]=-1;
+			endif;
+			i=i+1;
+		endwhile;
+	endif;
 
 	//Free page table Entries
 	//multipush(R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15);
@@ -119,4 +158,52 @@ if(functionNum==4) then //Free page table function
 	endwhile;
 
 	return;
+endif;
+
+if(functionNum==5) then //Kill all function
+
+	alias i R15;
+	i=0;
+	//For each entry in inode table acquire lock
+	while(i<60) do
+		if([INODE_TABLE+16*i+1]!=-1) then
+			backup;
+				R1=4;
+				R2=[SYSTEM_STATUS_TABLE+1];
+				R3=i;
+				call MOD_0;
+			restore;
+		endif;
+		i=i+1;
+	endwhile;
+
+	i=2;
+	//Killing all processes except idle and init/login
+	while(i<=MAX_PROC_NUM - 1) do
+		if(i!=[SYSTEM_STATUS_TABLE+1] && [PROCESS_TABLE+16*i+4]!=TERMINATED) then
+			backup;
+				R1=3;
+				R2=i;
+				call MOD_1; //exit process systemcall
+			restore;
+		endif;
+		i=i+1;
+	endwhile;
+
+	i=0;
+	//Releasing all acquired inode's
+	while(i<MAX_FILE_NUM) do
+		if([INODE_TABLE+16*i+1]!=-1) then
+			backup;
+				R1=5;
+				R2=[SYSTEM_STATUS_TABLE+1];
+				R3=i;
+				call MOD_0;
+			restore;
+		endif;
+		i=i+1;
+	endwhile;
+
+	return;
+
 endif;

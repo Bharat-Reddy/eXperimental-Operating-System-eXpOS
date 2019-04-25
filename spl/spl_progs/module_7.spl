@@ -1,9 +1,4 @@
-
-////////BOOT MODULE//////////
-
-//library code
-loadi(63,13);
-loadi(64,14);
+//BOOT MODULE
 
 //timer interrupt
 loadi(4,17);
@@ -17,152 +12,303 @@ loadi(7,20);
 loadi(8,21);
 loadi(9,22);
 
-//INT6
-loadi(14,27);
-loadi(15,28);
 
-//INT7
-loadi(16,29);
-loadi(17,30);
+//shared library
+loadi(63,13);
+loadi(64,14);
 
-//INT8
-loadi(18,31);
-loadi(19,32);
+//init programme
+loadi(65,7);
+//loadi(66,8);
 
-//INT9
-loadi(20,33);
-loadi(21,34);
+//ROOT FILE
+loadi(62,5);
 
-//INT10
+//INT 4
+loadi(10,23);
+loadi(11,24);
+
+//INT 5
+loadi(12,25);
+loadi(13,26);
+
+//INT 10
 loadi(22,35);
 loadi(23,36);
 
-//disk free list
-loadi(61,2);
-
-//init code
-loadi(65,7);
-loadi(66,8);
-
-//exhandler
+//Exception handler
 loadi(2,15);
 loadi(3,16);
 
-//module_0
+//INT 7
+loadi(16,29);
+loadi(17,30);
+
+//INT 6
+loadi(14,27);
+loadi(15,28);
+
+//INT 9
+loadi(20,33);
+loadi(21,34);
+
+//INT 8
+loadi(18,31);
+loadi(19,32);
+
+//INT 11
+loadi(24,37);
+loadi(25,38);
+
+//INT 12
+loadi(26,39);
+loadi(27,40);
+
+//INT 13
+loadi(28,41);
+loadi(29,42);
+
+//INT 14
+loadi(30,43);
+loadi(31,44);
+
+//INT 15
+loadi(32,45);
+loadi(33,46);
+
+//INT 16
+loadi(34,47);
+loadi(35,48);
+
+//INT 17
+loadi(36,49);
+loadi(37,50);
+
+//Module 0
 loadi(40,53);
 loadi(41,54);
 
-//module_1
-loadi(42,55);
-loadi(43,56);
-
-//module_2
-loadi(44,57);
-loadi(45,58);
-
-//module_4
+//Module 4
 loadi(48,61);
 loadi(49,62);
 
-//inode table
+//Module 1
+loadi(42,55);
+loadi(43,56);
+
+//Module 2
+loadi(44,57);
+loadi(45,58);
+
+//Module 3
+loadi(46,59);
+loadi(47,60);
+
+//Inode Table
 loadi(59,3);
 loadi(60,4);
 
+//Loading SHELL Programme
+loadi(67,9);
+loadi(68,10);
 
-//page table entries for init process
-PTBR = PAGE_TABLE_BASE + 20;
-PTLR=10;
+//Loading Disk Free List
+loadi(61,2);
 
-//library
+//Setting memory free list
+alias i R0;
+i=0;
+while(i<=80) do
+	[MEMORY_FREE_LIST+i]=1;
+	i=i+1;
+endwhile;
+i=81;
+while(i<=127) do
+	[MEMORY_FREE_LIST+i]=0;
+	i=i+1;
+endwhile;
+
+//Initializing file_open_table
+i=0;
+while(i<MAX_OPENFILE_NUM) do
+	[OPEN_FILE_TABLE+4*i+0]=-1;
+	[OPEN_FILE_TABLE+4*i+1]=0;
+	i=i+1;
+endwhile;
+
+//Initialising Semaphore table
+
+i=0;
+while(i<32) do
+	[SEMAPHORE_TABLE+i*4+0]=-1;
+	[SEMAPHORE_TABLE+i*4+1]=0;
+	i=i+1;
+endwhile;
+
+
+//Initialising WAIT_MEM_COUNT to 0
+[SYSTEM_STATUS_TABLE+3]=0;
+
+//Initialising MEM_FREE_COUNT to 45(no of free pages)
+[SYSTEM_STATUS_TABLE+2]=47;
+
+//Initialising terminal status to 0
+[TERMINAL_STATUS_TABLE] = 0;
+
+//Disk terminal status to 0
+[DISK_STATUS_TABLE] = 0;
+
+//Initializing file status table
+i=0;
+while(i<60) do
+	[FILE_STATUS_TABLE+i*4+0]=-1;
+	[FILE_STATUS_TABLE+i*4+1]=-1;
+	i=i+1;
+endwhile;
+
+//Initializing buffer table
+i=0;
+while(i<4) do
+	[BUFFER_TABLE+i*4+0]=-1;
+	[BUFFER_TABLE+i*4+1]=0;
+	[BUFFER_TABLE+i*4+2]=-1;
+	i=i+1;
+endwhile;
+
+
+//---------------------------------- SHELL PROCESS ---------------------------//
+
+PTBR = PAGE_TABLE_BASE+40;
+PTLR = 10;
+
+//Library
 [PTBR+0]=63;
 [PTBR+1]="0100";
 [PTBR+2]=64;
 [PTBR+3]="0100";
 
-//heap
-[PTBR+4]=78;
-[PTBR+5]="0110";
-[PTBR+6]=79;
-[PTBR+7]="0110";
+//Heap
+[PTBR+4]=-1;
+[PTBR+5]="0000";
+[PTBR+6]=-1;
+[PTBR+7]="0000";
 
-//code
-[PTBR+8]=65;
+//Code
+[PTBR+8]=67;
 [PTBR+9]="0100";
-[PTBR+10]=66;
+[PTBR+10]=68; //66
 [PTBR+11]="0100";
 [PTBR+12]=-1;
 [PTBR+13]="0000";
 [PTBR+14]=-1;
 [PTBR+15]="0000";
 
-//stack
-[PTBR+16]=76;
+//Stack
+[PTBR+16]=78;
 [PTBR+17]="0110";
-[PTBR+18]=77;
+[PTBR+18]=79;
 [PTBR+19]="0110";
 
-//process table entries for init process
-[PROCESS_TABLE + 16 + 1] = 1;
-[PROCESS_TABLE + 16 + 4] = CREATED;
-[PROCESS_TABLE + 16 + 11] = 80;
-[PROCESS_TABLE + 16 + 12] = 0;
-[PROCESS_TABLE + 16 + 13] = 8*512;
-[PROCESS_TABLE + 16 + 14] = PAGE_TABLE_BASE + 20;
-[PROCESS_TABLE + 16 + 15] = 10;
+i=32;
 
-[76*512] = [65*512 + 1]; //entry point for init process
+[PROCESS_TABLE+i+11]=80;
 
+[PROCESS_TABLE+i+1]=2;
+[PROCESS_TABLE+i+2]=1;
+[PROCESS_TABLE+i+4]=TERMINATED;
+[PROCESS_TABLE+i+13]=8*512;
+[PROCESS_TABLE+i+12]=0;
+[PROCESS_TABLE+i+14]=PAGE_TABLE_BASE+40;
+[PROCESS_TABLE+i+15]=10;
+[PROCESS_TABLE+i+3]=1; //setting userid to root
+
+alias disk_map R11;
+disk_map= DISK_MAP_TABLE + 10*2;
+
+i=0;
+while(i<=9) do
+	[disk_map+i]=-1;
+	i=i+1;
+endwhile;
+[disk_map+4]=67;
+[disk_map+5]=68;
+//[disk_map]=-1;
+//[disk_map+1]=-1;
+//[disk_map+2]=-1;
+//[disk_map+3]=-1;
+//[disk_map+4]=67;
+//[disk_map+5]=68;
+//[disk_map+6]=-1;
+//[disk_map+7]=-1;
+//[disk_map+8]=-1;
+//[disk_map+9]=-1;
+
+[78*512]=[67*512+1];
+
+//---------------------------------------INIT PROCESS -------------------------//
+PTBR=PAGE_TABLE_BASE+20;
+PTLR=10;
+
+//Library
+[PTBR+0]=63;
+[PTBR+1]="0100";
+[PTBR+2]=64;
+[PTBR+3]="0100";
+
+//Heap
+[PTBR+4]=-1;
+[PTBR+5]="0000";
+[PTBR+6]=-1;
+[PTBR+7]="0000";
+
+//Code
+[PTBR+8]=65;
+[PTBR+9]="0100";
+[PTBR+10]=-1; //66
+[PTBR+11]="0000";
+[PTBR+12]=-1;
+[PTBR+13]="0000";
+[PTBR+14]=-1;
+[PTBR+15]="0000";
+
+//Stack
+[PTBR+16]=66;  //76
+[PTBR+17]="0110";
+[PTBR+18]=-1;
+[PTBR+19]="0000";
+
+
+[PROCESS_TABLE+16+11]=77;  //80 //user area page of init
+
+//Setting up per-process resource table in last 16 words of user area page
+alias ind R13;
+ind=496;
+while(ind<=511) do
+	[77*512+ind]=-1;
+	ind=ind+2;
+endwhile;
+//Initially per process resource table is empty
+
+[PROCESS_TABLE+16+1]=1;
+[PROCESS_TABLE+16+4]=CREATED;
+[PROCESS_TABLE+16+13]=8*512;
+[PROCESS_TABLE+16+12]=0;
+[PROCESS_TABLE+16+14]=PAGE_TABLE_BASE+20;
+[PROCESS_TABLE+16+15]=10;
+[PROCESS_TABLE+16+3]=1; //setting userid to root
+
+[66*512]=[65*512+1];
 
 
 //all other processes initially terminated
 multipush (R0);
 alias count R0;
-count = 2;
+count = 3;
 
 while(count < 16) do
 	[PROCESS_TABLE + count*16 + 4] = TERMINATED;
 	count = count + 1;
 endwhile;
 multipop (R0);
-
-[TERMINAL_STATUS_TABLE] = 0;  //setting terminal as free initially
-[DISK_STATUS_TABLE] = 0;	//set disk as free
-
-multipush (R0);
-count = 0;
-while (count < 128) do 	//initialize mem free list
-	if (count < 83) then
-		[MEMORY_FREE_LIST + count] = 1;
-	else
-		[MEMORY_FREE_LIST + count] = 0;
-	endif;
-	count = count + 1;
-endwhile;
-
-[SYSTEM_STATUS_TABLE + 2] = 45;	//initial mem_free_count = 45
-[SYSTEM_STATUS_TABLE + 3] = 0;	//initial mem_wait_count = 0
-multipop (R0);
-
-//disk map table of init process
-[DISK_MAP_TABLE + 0] = -1;
-[DISK_MAP_TABLE + 2] = -1;
-[DISK_MAP_TABLE + 3] = -1;
-[DISK_MAP_TABLE + 4] = 7;
-[DISK_MAP_TABLE + 5] = 8;
-[DISK_MAP_TABLE + 6] = -1;
-[DISK_MAP_TABLE + 7] = -1;
-[DISK_MAP_TABLE + 8] = -1;
-[DISK_MAP_TABLE + 9] = -1;
-
-//Setting up per-process resource table in last 16 words of user area page
-backup;
-count=496;
-while(count<=511) do
-	[[PROCESS_TABLE + 16 + 11]*512+count]=-1;
-	count=count+2;
-endwhile;
-restore;
-//Initially per process resource table is empty
-
 
 return;

@@ -1,5 +1,5 @@
 //SCHEDULER
-
+//print "MOD_5 called";
 //getting current process id
 alias currentPID R0;
 currentPID = [SYSTEM_STATUS_TABLE+1];
@@ -18,22 +18,10 @@ process_table_entry = PROCESS_TABLE + currentPID * 16;
 //switching process
 
 alias tempPID R10;
-alias newPID R2;
-//newPID=0;
-//////////////////////////
-//Checking if all processes are terminated
-tempPID=1;
-while(tempPID<=15) do
-	if([ (PROCESS_TABLE + (tempPID * 16)) + 4 ] != TERMINATED) then
-		break;
-	endif;
-	tempPID=tempPID+1;
-endwhile;
-if(tempPID==16) then
-	halt;
-endif;
+tempPID=currentPID+1;
 
-/////////////////////////
+alias newPID R2;
+newPID=0;
 
 tempPID=1;
 /////////////////////////////
@@ -58,6 +46,8 @@ endwhile;
 
 //restoring process context
 
+
+
 alias new_process_table R13;
 new_process_table = PROCESS_TABLE + newPID * 16;
 
@@ -67,14 +57,16 @@ new_userarea_page_no = [new_process_table + 11];
 SP =  new_userarea_page_no * 512 + [new_process_table + 12] ;
 PTBR = [new_process_table + 14];
 PTLR = [new_process_table + 15];
-
 //changing current process
 [SYSTEM_STATUS_TABLE + 1] = newPID;
+
 
 if([new_process_table + 4] == CREATED) then
 	SP=[new_process_table + 13];
 	
 	BP = [[PROCESS_TABLE+16*newPID+11]*512];
+	//multipop (BP);
+
 	[new_process_table + 4] = RUNNING;
 	[new_process_table + 9] = 0;
 	ireturn;
